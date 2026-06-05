@@ -1,0 +1,113 @@
+<div class="flex min-h-[100dvh] flex-col bg-cream">
+  <!-- header -->
+  <header class="sticky top-0 z-10 flex items-center gap-2 border-b border-black/5 bg-white px-3 py-3 sm:px-4">
+    <button (click)="goBack()" aria-label="Back"
+      class="flex shrink-0 items-center rounded-lg p-1.5 text-teal-700 hover:bg-teal-50 hover:text-teal-900">
+      <span class="material-icons" style="font-size:22px">arrow_back</span>
+    </button>
+    <h1 class="flex-1 truncate font-heading text-lg font-bold text-teal-900">My profile</h1>
+    <span *ngIf="saved" class="flex shrink-0 items-center gap-1 text-sm font-medium text-green-600">
+      <span class="material-icons" style="font-size:18px">check_circle</span> Saved
+    </span>
+    <button pButton type="button" (click)="save()" [disabled]="saving || loading"
+      [label]="saving ? 'Saving…' : 'Save changes'" icon="pi pi-check" class="shrink-0"></button>
+  </header>
+
+  <main class="flex-1 overflow-y-auto px-4 py-5">
+    <div class="mx-auto max-w-2xl">
+      <p *ngIf="loading" class="py-10 text-center text-sm text-teal-900/50">Loading your details…</p>
+
+      <p *ngIf="!loading && error && !saving"
+        class="mb-4 rounded-lg bg-red-50 px-3 py-2 text-center text-sm text-red-600">
+        {{ error }}
+      </p>
+
+      <form *ngIf="!loading" [formGroup]="form" (ngSubmit)="save()" class="space-y-6">
+        <!-- Personal details -->
+        <section class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
+          <h2 class="mb-4 font-heading text-base font-semibold text-teal-900">Personal details</h2>
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-medium text-teal-900/60">First name</label>
+              <input pInputText formControlName="first_name" placeholder="First name" class="w-full" />
+            </div>
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-medium text-teal-900/60">Last name</label>
+              <input pInputText formControlName="last_name" placeholder="Last name" class="w-full" />
+            </div>
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-medium text-teal-900/60">Date of birth</label>
+              <p-calendar formControlName="DOB" [showIcon]="true" dateFormat="dd/mm/yy"
+                styleClass="w-full" inputStyleClass="w-full"
+                placeholder="dd/mm/yyyy" [readonlyInput]="true"></p-calendar>
+            </div>
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-medium text-teal-900/60">Gender</label>
+              <p-dropdown formControlName="gender" [options]="genders" optionLabel="label" optionValue="value"
+                placeholder="Select" styleClass="w-full" [showClear]="true"></p-dropdown>
+            </div>
+          </div>
+        </section>
+
+        <!-- Contact -->
+        <section class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
+          <h2 class="mb-4 font-heading text-base font-semibold text-teal-900">Contact</h2>
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-medium text-teal-900/60">Email</label>
+              <input pInputText type="email" formControlName="email" placeholder="you@example.com" class="w-full" />
+              <small *ngIf="form.get('email')?.touched && form.get('email')?.invalid" class="text-red-600">
+                Enter a valid email.
+              </small>
+            </div>
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-medium text-teal-900/60">Mobile number</label>
+              <input pInputText formControlName="mobile" class="w-full" />
+              <small class="text-teal-900/40">Your account ID — can't be changed.</small>
+            </div>
+          </div>
+        </section>
+
+        <!-- Address -->
+        <section class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
+          <h2 class="mb-4 font-heading text-base font-semibold text-teal-900">Address</h2>
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div class="flex flex-col gap-1 sm:col-span-2">
+              <label class="text-xs font-medium text-teal-900/60">Address</label>
+              <input pInputText formControlName="address" placeholder="House / street" class="w-full" />
+            </div>
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-medium text-teal-900/60">City</label>
+              <input pInputText formControlName="city" placeholder="City" class="w-full" />
+            </div>
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-medium text-teal-900/60">State</label>
+              <input pInputText formControlName="state" placeholder="State" class="w-full" />
+            </div>
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-medium text-teal-900/60">Country</label>
+              <input pInputText formControlName="country" placeholder="Country" class="w-full" />
+            </div>
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-medium text-teal-900/60">Zipcode</label>
+              <input pInputText formControlName="Zipcode" placeholder="Zipcode" inputmode="numeric" class="w-full" />
+            </div>
+          </div>
+        </section>
+
+        <!-- Medical -->
+        <section class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5" formGroupName="medical_records">
+          <h2 class="mb-4 font-heading text-base font-semibold text-teal-900">Medical</h2>
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-medium text-teal-900/60">Blood group</label>
+              <p-dropdown formControlName="blood_group" [options]="bloodGroups" optionLabel="label" optionValue="value"
+                placeholder="Select" styleClass="w-full" [showClear]="true"></p-dropdown>
+            </div>
+          </div>
+        </section>
+
+      </form>
+    </div>
+  </main>
+</div>

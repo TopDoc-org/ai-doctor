@@ -1,0 +1,105 @@
+import { Injectable } from '@angular/core';
+import { ChatMessage, Report, GeoLocation } from '../models';
+
+const LS_SESSION = 'aiDoctorSessionId';
+const LS_LEAD = 'aiDoctorLeadCaptured';
+const LS_CONSENT = 'aiDoctorConsent';
+const LS_TOKEN = 'aiDoctorToken';
+const LS_USERID = 'aiDoctorUserId';
+const LS_USERNAME = 'aiDoctorUserName';
+const LS_USERMOBILE = 'aiDoctorUserMobile';
+
+// Lightweight session state. sessionId persists in localStorage so a refresh
+// resumes the same anonymous session; chat history is rehydrated from the server.
+@Injectable({ providedIn: 'root' })
+export class AiDoctorStateService {
+  messages: ChatMessage[] = [];
+  report: Report | null = null;
+  location: GeoLocation | null = null;
+  suggestedSpecialty: string | null = null;
+
+  get sessionId(): string | null {
+    return localStorage.getItem(LS_SESSION);
+  }
+  set sessionId(id: string | null) {
+    if (id) localStorage.setItem(LS_SESSION, id);
+    else localStorage.removeItem(LS_SESSION);
+  }
+
+  get leadCaptured(): boolean {
+    return localStorage.getItem(LS_LEAD) === '1';
+  }
+  set leadCaptured(v: boolean) {
+    localStorage.setItem(LS_LEAD, v ? '1' : '0');
+  }
+
+  get consented(): boolean {
+    return localStorage.getItem(LS_CONSENT) === '1';
+  }
+  set consented(v: boolean) {
+    localStorage.setItem(LS_CONSENT, v ? '1' : '0');
+  }
+
+  // --- Auth (PIN account). Persisted so a returning user stays logged in and
+  // can reach their consult history. Survives reset() (New chat). ---
+  get authToken(): string | null {
+    return localStorage.getItem(LS_TOKEN);
+  }
+  set authToken(t: string | null) {
+    if (t) localStorage.setItem(LS_TOKEN, t);
+    else localStorage.removeItem(LS_TOKEN);
+  }
+
+  get userId(): string | null {
+    return localStorage.getItem(LS_USERID);
+  }
+  set userId(id: string | null) {
+    if (id) localStorage.setItem(LS_USERID, id);
+    else localStorage.removeItem(LS_USERID);
+  }
+
+  get userName(): string | null {
+    return localStorage.getItem(LS_USERNAME);
+  }
+  set userName(n: string | null) {
+    if (n) localStorage.setItem(LS_USERNAME, n);
+    else localStorage.removeItem(LS_USERNAME);
+  }
+
+  get userMobile(): string | null {
+    return localStorage.getItem(LS_USERMOBILE);
+  }
+  set userMobile(m: string | null) {
+    if (m) localStorage.setItem(LS_USERMOBILE, m);
+    else localStorage.removeItem(LS_USERMOBILE);
+  }
+
+  get isLoggedIn(): boolean {
+    return !!this.authToken;
+  }
+
+  logout(): void {
+    this.authToken = null;
+    this.userId = null;
+    this.userName = null;
+    this.userMobile = null;
+  }
+
+  addMessage(m: ChatMessage) {
+    this.messages.push(m);
+  }
+
+  setMessages(msgs: ChatMessage[]) {
+    this.messages = msgs;
+  }
+
+  reset() {
+    this.messages = [];
+    this.report = null;
+    this.location = null;
+    this.suggestedSpecialty = null;
+    this.sessionId = null;
+    localStorage.removeItem(LS_LEAD);
+    localStorage.removeItem(LS_CONSENT); // re-ask consent on each new chat
+  }
+}

@@ -1,0 +1,672 @@
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { environment } from '../../../../environments/environment';
+import { AiDoctorApiService } from '../../services/ai-doctor-api.service';
+import { AiDoctorStateService } from '../../services/ai-doctor-state.service';
+import { GeolocationService } from '../../services/geolocation.service';
+import { ChatMessage, Doctor, MessageResponse, Report } from '../../models';
+
+@Component({
+  selector: 'app-triage-shell',
+  templateUrl: './triage-shell.component.html',
+  styleUrls: ['./triage-shell.component.scss'],
+})
+export class TriageShellComponent implements OnInit {
+  @ViewChild('scrollAnchor') scrollAnchor?: ElementRef<HTMLDivElement>;
+  @ViewChild('composer') composer?: ElementRef<HTMLTextAreaElement>;
+
+  emergencyNumbers = environment.emergencyNumbers;
+  appName = environment.appName;
+
+  input = '';
+  loading = false;
+  emergency = false;
+
+  // triage progress toward the report
+  progress = 0;
+  stepsLeft = 0;
+
+  report: Report | null = null;
+  reportOpen = { causes: true, soap: false };
+
+  // consent gate (before first AI reply)
+  showConsent = false;
+  consentChecked = false;
+  private pendingText = '';
+
+  // age/sex quick-input
+  sex: 'female' | 'male' | '' = '';
+  age: number | null = null;
+  ageSexDone = false; // hide the panel only AFTER submit (not while typing)
+
+  // Consult subject: a logged-in user may consult for themselves (reuse their
+  // saved profile age/gender) or for someone else (ask fresh, don't touch
+  // their profile). null = not yet chosen.
+  consultFor: 'self' | 'other' | null = null;
+  editingDetails = false; // show the raw age/gender inputs
+  profileAge: number | null = null; // derived from saved DOB
+  profileGender = ''; // 'male' | 'female' | 'other' | ''
+
+  // doctor discovery
+  doctors: Doctor[] = [];
+  doctorsLoading = false;
+  askCity = false;
+  city = '';
+  locError = '';
+
+  // auth gate + consult history
+  showAuth = false;
+  showHistory = false;
+  pendingAction: 'pdf' | 'doctors' | null = null;
+
+  // side drawer (account menu)
+  showDrawer = false;
+
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    public api: AiDoctorApiService,
+    public state: AiDoctorStateService,
+    private geo: GeolocationService
+  ) {}
+
+  get messages(): ChatMessage[] {
+    return this.state.messages;
+  }
+
+  // Report is the funnel's end artifact: lock free-text chat once it's ready
+  // (user can still find a doctor / start a new chat).
+  get consultComplete(): boolean {
+    return !!this.report && !this.emergency;
+  }
+
+  // Quick age/sex input is a shortcut for the FIRST triage question only.
+  // Show it during that single turn — i.e. exactly one assistant message so far
+  // (the age/sex ask) and the user hasn't replied yet. Counting turns (instead
+  // of relying on pickAgeSex() to set a flag) keeps the panel from re-rendering
+  // on every later question when the user answers age/sex as free text.
+  get needAgeSex(): boolean {
+    if (this.report || this.emergency || this.ageSexDone) return false;
+    const assistantCount = this.messages.filter((m) => m.role === 'assistant').length;
+    const last = this.messages[this.messages.length - 1];
+    return assistantCount === 1 && last?.role === 'assistant';
+  }
+
+  // Ask "self or someone else?" for any logged-in user so a someone-else
+  // consult never overwrites the account holder's profile.
+  get askConsultFor(): boolean {
+    return this.state.isLoggedIn;
+  }
+
+  // Do we have saved details to prefill/confirm for a self-consult?
+  get hasProfileDetails(): boolean {
+    return this.profileAge != null || !!this.profileGender;
+  }
+
+  ngOnInit(): void {
+    const seed = this.route.snapshot.queryParamMap.get('q');
+    const wantsLogin = this.route.snapshot.queryParamMap.get('login') === '1';
+    if (this.state.isLoggedIn) this.loadProfileDetails();
+    // Don't create a session up front — that would persist an empty conversation
+    // on every load. A session is created lazily on the first user message.
+    if (wantsLogin) {
+      this.consumeSeedParam();
+      this.openAccount();
+    }
+    this.rehydrate(() => {
+      if (this.state.messages.length === 0) {
+        if (seed) {
+          this.consumeSeedParam();
+          this.send(seed);
+        } else {
+          this.state.addMessage({
+            role: 'assistant',
+            text: "Hi! I'm your AI health guide. Tell me what's bothering you and I'll ask a few questions.",
+          });
+        }
+      } else if (seed) {
+        // history already exists -> don't replay seed; just clean the URL
+        this.consumeSeedParam();
+      }
+    });
+  }
+
+  private consumeSeedParam(): void {
+    this.router.navigate([], { queryParams: {}, replaceUrl: true });
+  }
+
+  private ensureSession(done: () => void): void {
+    if (this.state.sessionId) {
+      done();
+      return;
+    }
+    this.api.createSession().subscribe({
+      next: (res) => {
+        this.state.sessionId = res.sessionId;
+        done();
+      },
+      error: () => done(),
+    });
+  }
+
+  // Pull authoritative history from the server so reloads don't lose the chat.
+  private rehydrate(done: () => void): void {
+    const sid = this.state.sessionId;
+    if (!sid) return done();
+    this.api.getSession(sid).subscribe({
+      next: (s) => {
+        this.state.setMessages(
+          (s.messages || []).map((m) => ({
+            role: m.role === 'user' ? 'user' : 'assistant',
+            text: m.text,
+            intent: m.intent,
+          }))
+        );
+        if (s.report) {
+          this.report = s.report;
+          this.state.report = s.report;
+        }
+        this.emergency = !!s.emergency;
+        if (s.suggestedSpecialty) this.state.suggestedSpecialty = s.suggestedSpecialty;
+        if (s.hasLead) this.state.leadCaptured = true;
+        if (s.age != null) {
+          this.age = s.age;
+          this.ageSexDone = true;
+        }
+        if (s.sex === 'male' || s.sex === 'female') this.sex = s.sex;
+        this.scrollSoon();
+        done();
+      },
+      error: () => done(), // stale/missing session -> start fresh
+    });
+  }
+
+  submitInput(): void {
+    const text = this.input.trim();
+    if (!text || this.loading || this.emergency) return;
+    this.input = '';
+    this.resetComposerHeight();
+    this.send(text);
+  }
+
+  // Grow the textarea with content, up to the CSS max-height.
+  autoGrow(el: HTMLTextAreaElement): void {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 160) + 'px';
+  }
+
+  // Enter sends; Shift+Enter inserts a newline.
+  onEnter(e: Event): void {
+    const ke = e as KeyboardEvent;
+    if (ke.shiftKey) return;
+    e.preventDefault();
+    this.submitInput();
+  }
+
+  private resetComposerHeight(): void {
+    const el = this.composer?.nativeElement;
+    if (el) el.style.height = 'auto';
+  }
+
+  pickAgeSex(): void {
+    if (!this.sex && this.age == null) return;
+    const parts: string[] = [];
+    if (this.age != null) parts.push(`I am ${this.age} years old`);
+    if (this.sex) parts.push(`biological sex ${this.sex}`);
+    this.ageSexDone = true;
+    this.send(parts.join(', '));
+  }
+
+  // --- Consult subject (self vs other) ---
+  // Self: prefill from the saved profile and let the user confirm. With nothing
+  // saved yet, drop straight to the inputs (and persist on submit).
+  chooseSelf(): void {
+    this.consultFor = 'self';
+    this.age = this.profileAge;
+    this.sex =
+      this.profileGender === 'male' || this.profileGender === 'female'
+        ? this.profileGender
+        : '';
+    this.editingDetails = !this.hasProfileDetails;
+  }
+
+  // Someone else: ask fresh, never write back to the account holder's profile.
+  chooseOther(): void {
+    this.consultFor = 'other';
+    this.editingDetails = true;
+    this.age = null;
+    this.sex = '';
+  }
+
+  // Saved details are wrong -> reveal the normal inputs (already prefilled).
+  editSelf(): void {
+    this.editingDetails = true;
+  }
+
+  // Saved details confirmed as-is -> send them straight through (no profile write).
+  confirmSelf(): void {
+    this.pickAgeSex();
+  }
+
+  // Submit from the raw inputs. For a self-consult, persist any edits back to
+  // the patient profile before sending the triage message.
+  submitDetails(): void {
+    if (!this.sex && this.age == null) return;
+    if (this.consultFor === 'self' && this.state.isLoggedIn) {
+      this.saveProfileAgeSex();
+    }
+    this.pickAgeSex();
+  }
+
+  private loadProfileDetails(): void {
+    const uid = this.state.userId;
+    if (!uid) return;
+    this.api.getUserDetails(uid, ['DOB', 'gender']).subscribe({
+      next: (res) => {
+        const d = res?.results?.[0] || {};
+        this.profileAge = this.ageFromDob(d.DOB || d.dob);
+        this.profileGender = (d.gender || '').toLowerCase();
+      },
+      error: () => {},
+    });
+  }
+
+  // Persist edited self details. age -> approx DOB (Jan 1 of birth year; the
+  // profile has no age field), sex -> gender. Fire-and-forget.
+  private saveProfileAgeSex(): void {
+    const uid = this.state.userId;
+    if (!uid) return;
+    const payload: any = { id: [uid], role: 'user' };
+    if (this.sex) payload.gender = this.sex;
+    if (this.age != null && this.age > 0) {
+      payload.DOB = `${new Date().getFullYear() - this.age}-01-01`;
+    }
+    this.profileAge = this.age;
+    if (this.sex) this.profileGender = this.sex;
+    this.api.updateUserDetails(payload).subscribe({ next: () => {}, error: () => {} });
+  }
+
+  private ageFromDob(v: any): number | null {
+    if (!v) return null;
+    const d = new Date(v);
+    if (isNaN(d.getTime())) return null;
+    const now = new Date();
+    let a = now.getFullYear() - d.getFullYear();
+    const m = now.getMonth() - d.getMonth();
+    if (m < 0 || (m === 0 && now.getDate() < d.getDate())) a--;
+    return a >= 0 && a < 150 ? a : null;
+  }
+
+  // Adds the user bubble, then gates on consent before hitting the backend.
+  // Session is created lazily inside dispatch() on the first real message.
+  private send(text: string): void {
+    this.state.addMessage({ role: 'user', text });
+    this.scrollSoon();
+    if (!this.state.consented) {
+      this.pendingText = text;
+      this.showConsent = true;
+      return;
+    }
+    this.dispatch(text);
+  }
+
+  agreeConsent(): void {
+    if (!this.consentChecked) return;
+    this.state.consented = true;
+    this.showConsent = false;
+    const t = this.pendingText;
+    this.pendingText = '';
+    if (t) this.dispatch(t);
+  }
+
+  private dispatch(text: string): void {
+    // Create the session on demand (first message) so empty visits aren't stored.
+    this.ensureSession(() => this.dispatchToSession(text));
+  }
+
+  private dispatchToSession(text: string): void {
+    const sid = this.state.sessionId!;
+    this.loading = true;
+    this.api.sendMessage(sid, text).subscribe({
+      next: (res) => {
+        this.loading = false;
+        this.handleResponse(res);
+        this.scrollSoon();
+      },
+      error: () => {
+        this.loading = false;
+        this.state.addMessage({
+          role: 'assistant',
+          text: 'Sorry, something went wrong. Please try again.',
+        });
+      },
+    });
+  }
+
+  private handleResponse(res: MessageResponse): void {
+    const say = (t?: string) =>
+      t && this.state.addMessage({ role: 'assistant', text: t, intent: res.intent });
+
+    switch (res.type) {
+      case 'emergency':
+        this.emergency = true;
+        say(res.message);
+        break;
+      case 'report':
+        if (res.report) {
+          this.report = res.report;
+          this.state.report = res.report;
+        }
+        this.progress = 100;
+        this.stepsLeft = 0;
+        break;
+      case 'question': {
+        say(res.message || res.question);
+        if (res.progress != null) this.progress = res.progress;
+        if (res.stepsLeft != null) this.stepsLeft = res.stepsLeft;
+        break;
+      }
+      case 'find_doctor':
+        say(res.message);
+        this.state.suggestedSpecialty =
+          res.suggestedSpecialty || this.state.suggestedSpecialty;
+        this.connectDoctor();
+        break;
+      case 'refusal':
+      case 'medicine_info':
+      case 'general_health':
+      case 'out_of_scope':
+      default:
+        say(res.message);
+        break;
+    }
+  }
+
+  // ---- Report actions (auth-gated) ----
+  downloadPdf(): void {
+    if (!this.state.isLoggedIn) return this.openAuth('pdf');
+    this.runPdf();
+  }
+
+  connectDoctor(): void {
+    if (!this.state.isLoggedIn) return this.openAuth('doctors');
+    this.openLocationPrompt();
+  }
+
+  shareReport(): void {
+    const nav: any = navigator;
+    if (nav.share) {
+      nav
+        .share({
+          title: 'My Health Summary',
+          text: this.report?.summary || `Health summary from ${this.appName}`,
+        })
+        .catch(() => {});
+    } else {
+      alert('Sharing is not supported on this device.');
+    }
+  }
+
+  private openAuth(action: 'pdf' | 'doctors' | null): void {
+    this.pendingAction = action;
+    this.showAuth = true;
+  }
+
+  // Header "My consults / Log in": logged-in -> history, else open auth (no action).
+  openAccount(): void {
+    if (this.state.isLoggedIn) this.showHistory = true;
+    else this.openAuth(null);
+  }
+
+  // --- Side drawer (account menu) ---
+  openDrawer(): void {
+    this.showDrawer = true;
+  }
+
+  closeDrawer(): void {
+    this.showDrawer = false;
+  }
+
+  openProfile(): void {
+    this.showDrawer = false;
+    this.router.navigate(['/triage/profile']);
+  }
+
+  openChangePin(): void {
+    this.showDrawer = false;
+    this.router.navigate(['/triage/change-pin']);
+  }
+
+  // Auth succeeded: link the AI session to the account (keeps server PDF gate
+  // working + tags the session for history), then run the pending action.
+  onAuthSuccess(ev: {
+    name: string;
+    mobile: string;
+    userId: string;
+    district?: string;
+    city?: string;
+    state?: string;
+    lat?: number | null;
+    lng?: number | null;
+  }): void {
+    this.showAuth = false;
+    // Remember the district/location so the doctor search can reuse it.
+    if (ev.lat != null && ev.lng != null) {
+      this.state.location = {
+        lat: ev.lat,
+        lng: ev.lng,
+        city: ev.city || null,
+        district: ev.district || null,
+        state: ev.state || null,
+      };
+    }
+    if (ev.city || ev.district) this.city = ev.city || ev.district || '';
+    const sid = this.state.sessionId;
+    if (sid) {
+      this.state.leadCaptured = true;
+      this.api
+        .captureLead(sid, ev.name, ev.mobile, ev.userId, {
+          district: ev.district,
+          city: ev.city,
+          state: ev.state,
+          lat: ev.lat,
+          lng: ev.lng,
+        })
+        .subscribe({
+          next: () => {},
+          error: () => {},
+        });
+    }
+    const action = this.pendingAction;
+    this.pendingAction = null;
+    if (action === 'pdf') this.runPdf();
+    if (action === 'doctors') this.openLocationPrompt();
+  }
+
+  // Log out -> clear auth + chat and return to landing.
+  onLoggedOut(): void {
+    this.showHistory = false;
+    this.showDrawer = false;
+    this.state.logout();
+    this.state.reset();
+    this.router.navigate(['/']);
+  }
+
+  // Open a past consultation and resume it (backend keeps triageState by sessionId).
+  openPastSession(sessionId: string): void {
+    this.showHistory = false;
+    if (!sessionId || sessionId === this.state.sessionId) return;
+    this.state.sessionId = sessionId;
+    this.state.setMessages([]);
+    this.report = null;
+    this.state.report = null;
+    this.doctors = [];
+    this.askCity = false;
+    this.emergency = false;
+    this.ageSexDone = false;
+    this.age = null;
+    this.sex = '';
+    this.consultFor = null;
+    this.editingDetails = false;
+    this.rehydrate(() => this.scrollSoon());
+  }
+
+  private runPdf(): void {
+    const sid = this.state.sessionId;
+    if (!sid) return;
+    this.api.downloadReportPdf(sid).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `health-report-${sid}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => alert('Could not download the report.'),
+    });
+  }
+
+  // ---- Doctor location flow (honors typed locality; geo is optional) ----
+  private openLocationPrompt(): void {
+    this.locError = '';
+    // Prefill from the district/city captured at sign-in if we have it.
+    if (!this.city) {
+      this.city =
+        this.state.location?.district || this.state.location?.city || '';
+    }
+    this.askCity = true;
+  }
+
+  async useMyLocation(): Promise<void> {
+    this.locError = '';
+    this.doctorsLoading = true;
+    const loc = await this.geo.getCurrentPosition();
+    this.state.location = loc;
+    if (loc.lat == null || loc.lng == null) {
+      this.doctorsLoading = false;
+      this.locError = "Couldn't get your location — type your city/area instead.";
+      return;
+    }
+    this.askCity = false;
+    this.fetchDoctors({ lat: loc.lat, lng: loc.lng });
+  }
+
+  submitCity(): void {
+    const c = this.city.trim();
+    if (!c) return;
+    this.askCity = false;
+    this.doctorsLoading = true;
+    this.fetchDoctors({ city: c });
+  }
+
+  private fetchDoctors(locPart: { lat?: number; lng?: number; city?: string }): void {
+    const sid = this.state.sessionId || undefined;
+    const specialty = this.report?.suggestedSpecialty || this.state.suggestedSpecialty || undefined;
+    this.doctorsLoading = true;
+    this.api.findDoctors({ sessionId: sid, specialty, ...locPart }).subscribe({
+      next: (res) => {
+        this.doctorsLoading = false;
+        this.doctors = res.doctors || [];
+        if (this.doctors.length === 0) {
+          this.state.addMessage({
+            role: 'assistant',
+            text: res.error || 'I could not find doctors there. Try another area.',
+          });
+        }
+        this.scrollSoon();
+      },
+      error: () => {
+        this.doctorsLoading = false;
+        this.locError = 'Search failed. Please try again.';
+      },
+    });
+  }
+
+  // Top pick = highest rating, then most reviews. Returns the recommended doctor.
+  get recommendedDoctor(): Doctor | null {
+    if (!this.doctors || !this.doctors.length) return null;
+    return [...this.doctors].sort(
+      (a, b) =>
+        (b.rating || 0) - (a.rating || 0) ||
+        (b.userRatingsTotal || 0) - (a.userRatingsTotal || 0)
+    )[0];
+  }
+
+  // Why the recommended doctor is a good fit (template — no extra LLM cost).
+  recommendReason(d: Doctor): string {
+    const spec = this.report?.suggestedSpecialty || this.state.suggestedSpecialty || 'your concern';
+    const bits = [`Matches the suggested specialist for you (${spec})`];
+    if (d.rating) {
+      bits.push(
+        `highest rated nearby — ${d.rating}★${d.userRatingsTotal ? ' (' + d.userRatingsTotal + ' reviews)' : ''}`
+      );
+    }
+    if (d.openNow === true) bits.push('open now');
+    return bits.join(' · ');
+  }
+
+  // Initials for the avatar fallback (no free doctor photos available).
+  initials(name?: string): string {
+    if (!name) return '?';
+    return name
+      .replace(/^(dr\.?|the)\s+/i, '')
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((w) => w[0])
+      .join('')
+      .toUpperCase();
+  }
+
+  // Deterministic avatar colour from the name.
+  avatarColor(name?: string): string {
+    const colors = ['#0D9488', '#2563eb', '#7c3aed', '#db2777', '#ea580c', '#0891b2'];
+    let h = 0;
+    for (const c of name || '') h = (h * 31 + c.charCodeAt(0)) % colors.length;
+    return colors[h];
+  }
+
+  // Split a SOAP field into readable bullet lines.
+  toBullets(text?: string): string[] {
+    if (!text) return [];
+    return text
+      .split(/(?:\.\s+|\n|;\s*|•\s*)/)
+      .map((s) => s.trim().replace(/\.$/, ''))
+      .filter((s) => s.length > 1);
+  }
+
+  restart(): void {
+    this.state.reset();
+    this.emergency = false;
+    this.report = null;
+    this.doctors = [];
+    this.askCity = false;
+    this.ageSexDone = false;
+    this.age = null;
+    this.sex = '';
+    this.consultFor = null;
+    this.editingDetails = false;
+    this.showConsent = false;
+    this.consentChecked = false;
+    this.showAuth = false;
+    this.showHistory = false;
+    this.showDrawer = false;
+    this.progress = 0;
+    this.stepsLeft = 0;
+    // Fresh start in place (no new session yet — created on the first message).
+    this.state.addMessage({
+      role: 'assistant',
+      text: "Hi! I'm your AI health guide. Tell me what's bothering you and I'll ask a few questions.",
+    });
+    this.scrollSoon();
+  }
+
+  private scrollSoon(): void {
+    setTimeout(
+      () => this.scrollAnchor?.nativeElement?.scrollIntoView({ behavior: 'smooth' }),
+      60
+    );
+  }
+}

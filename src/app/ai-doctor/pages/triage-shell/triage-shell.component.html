@@ -1,0 +1,508 @@
+<mat-sidenav-container class="h-[100dvh] bg-cream">
+  <!-- collapsible side navbar (Angular Material) -->
+  <mat-sidenav #drawer mode="over" position="start" [(opened)]="showDrawer" class="w-72 max-w-[80%]">
+    <div class="flex items-center justify-between border-b border-black/5 px-4 py-4">
+      <div class="min-w-0">
+        <p class="truncate font-heading text-base font-bold text-teal-900">
+          {{ state.isLoggedIn ? (state.userName || 'My account') : 'Welcome' }}
+        </p>
+        <p *ngIf="state.isLoggedIn && state.userMobile" class="truncate text-xs text-teal-900/50">
+          +91 {{ state.userMobile }}
+        </p>
+      </div>
+      <button (click)="closeDrawer()" aria-label="Close menu" class="material-icons text-teal-900/50">close</button>
+    </div>
+
+    <mat-nav-list>
+      <ng-container *ngIf="state.isLoggedIn; else loggedOutMenu">
+        <a mat-list-item (click)="openProfile()">
+          <span class="material-icons mr-3 text-teal-600" style="font-size:20px">person</span> Profile
+        </a>
+        <a mat-list-item (click)="openChangePin()">
+          <span class="material-icons mr-3 text-teal-600" style="font-size:20px">password</span> Change PIN
+        </a>
+        <a mat-list-item (click)="showDrawer = false; showHistory = true">
+          <span class="material-icons mr-3 text-teal-600" style="font-size:20px">history</span> My consults
+        </a>
+        <div class="my-1 border-t border-black/5"></div>
+        <a mat-list-item (click)="onLoggedOut()">
+          <span class="material-icons mr-3 text-red-600" style="font-size:20px">logout</span>
+          <span class="text-red-600">Log out</span>
+        </a>
+      </ng-container>
+      <ng-template #loggedOutMenu>
+        <a mat-list-item (click)="showDrawer = false; openAccount()">
+          <span class="material-icons mr-3 text-teal-600" style="font-size:20px">login</span> Log in
+        </a>
+      </ng-template>
+    </mat-nav-list>
+  </mat-sidenav>
+
+  <mat-sidenav-content>
+  <div class="flex h-[100dvh] flex-col bg-cream">
+  <!-- emergency banner -->
+  <div class="bg-red-600 px-4 py-2 text-center text-xs font-medium text-white">
+    If this is an emergency, call {{ emergencyNumbers.all }} or {{ emergencyNumbers.ambulance }} (ambulance) immediately.
+  </div>
+
+  <!-- header -->
+  <header class="flex items-center justify-between gap-2 border-b border-black/5 bg-white px-3 py-3 sm:px-4">
+    <div class="flex min-w-0 items-center gap-1">
+      <button (click)="openDrawer()" aria-label="Open menu"
+        class="flex shrink-0 items-center rounded-lg p-1.5 text-teal-700 hover:bg-teal-50 hover:text-teal-900">
+        <span class="material-icons" style="font-size:22px">menu</span>
+      </button>
+      <a routerLink="/" aria-label="Go to home"
+        class="flex min-w-0 shrink items-center gap-1 truncate font-heading text-base font-bold text-teal-900 hover:text-teal-700 sm:text-lg">
+        <span class="truncate">{{ appName }}</span>
+        <span class="material-icons shrink-0 text-teal-500" style="font-size:15px">auto_awesome</span>
+      </a>
+    </div>
+    <!-- actions: icon-only on mobile, icon+label from sm -->
+    <div class="flex shrink-0 items-center gap-1 sm:gap-3">
+      <button (click)="openAccount()" [attr.aria-label]="state.isLoggedIn ? 'My consults' : 'Log in'"
+        class="flex items-center gap-1 rounded-lg px-2 py-1.5 text-sm text-teal-700 hover:bg-teal-50 hover:text-teal-900">
+        <span class="material-icons" style="font-size:18px">{{ state.isLoggedIn ? 'history' : 'login' }}</span>
+        <span class="hidden sm:inline">{{ state.isLoggedIn ? 'My consults' : 'Log in' }}</span>
+      </button>
+      <button (click)="restart()" aria-label="New chat"
+        class="flex items-center gap-1 rounded-lg px-2 py-1.5 text-sm text-teal-700 hover:bg-teal-50 hover:text-teal-900">
+        <span class="material-icons" style="font-size:18px">refresh</span>
+        <span class="hidden sm:inline">New chat</span>
+      </button>
+      <button *ngIf="state.isLoggedIn" (click)="onLoggedOut()" aria-label="Log out"
+        class="flex items-center gap-1 rounded-lg px-2 py-1.5 text-sm text-teal-700 hover:bg-teal-50 hover:text-teal-900">
+        <span class="material-icons" style="font-size:18px">logout</span>
+        <span class="hidden sm:inline">Log out</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- triage progress -->
+  <div *ngIf="!report && !emergency && progress > 0" class="border-b border-black/5 bg-white px-4 pb-2 pt-2">
+    <div class="mx-auto max-w-2xl">
+      <div class="mb-1 flex justify-between text-[11px] text-teal-900/60">
+        <span>Building your health report…</span>
+        <span>~{{ stepsLeft }} step{{ stepsLeft === 1 ? '' : 's' }} left</span>
+      </div>
+      <div class="h-1.5 w-full rounded-full bg-teal-100">
+        <div class="h-1.5 rounded-full bg-teal-600 transition-all duration-500" [style.width.%]="progress"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- conversation -->
+  <main class="flex-1 overflow-y-auto px-4 py-5">
+    <div class="mx-auto max-w-2xl space-y-4">
+      <!-- chat bubbles -->
+      <div *ngFor="let m of messages" class="flex" [ngClass]="m.role === 'user' ? 'justify-end' : 'justify-start'">
+        <div
+          class="max-w-[80%] whitespace-pre-line rounded-2xl px-4 py-2.5 text-[15px] animate-fade-up"
+          [ngClass]="m.role === 'user'
+            ? 'bg-teal-600 text-white rounded-br-sm'
+            : 'bg-white text-teal-900 ring-1 ring-black/5 rounded-bl-sm'"
+        >
+          {{ m.text }}
+        </div>
+      </div>
+
+      <!-- typing / thinking indicator -->
+      <div *ngIf="loading" class="flex justify-start">
+        <div class="flex items-center gap-1.5 rounded-2xl rounded-bl-sm bg-white px-4 py-3 ring-1 ring-black/5">
+          <span class="mr-1 text-xs text-teal-900/50">{{ progress >= 90 && !report ? 'Preparing your report' : 'AI is thinking' }}</span>
+          <span class="h-2 w-2 animate-bounce rounded-full bg-teal-500" style="animation-delay:0ms"></span>
+          <span class="h-2 w-2 animate-bounce rounded-full bg-teal-500" style="animation-delay:150ms"></span>
+          <span class="h-2 w-2 animate-bounce rounded-full bg-teal-500" style="animation-delay:300ms"></span>
+        </div>
+      </div>
+
+      <!-- consent gate (before first AI reply) -->
+      <div *ngIf="showConsent" class="rounded-2xl bg-white p-4 ring-1 ring-black/5">
+        <p class="text-[15px] font-medium text-teal-900">Before I reply, please confirm — it's fast, safe and free.</p>
+        <label class="mt-3 flex items-start gap-2 text-sm text-teal-900/80">
+          <input type="checkbox" [(ngModel)]="consentChecked" class="mt-1" />
+          <span>
+            I agree to the <a routerLink="/terms" target="_blank" class="font-medium text-teal-700 underline">Terms of Use</a>
+            and will discuss all output with a doctor. {{ appName }} is an AI health-information assistant,
+            not a licensed physician, and does not practise medicine or provide medical advice.
+            The health information I share is processed to generate my summary as described in the
+            <a routerLink="/privacy" target="_blank" class="font-medium text-teal-700 underline">Privacy Policy</a>.
+          </span>
+        </label>
+        <button
+          (click)="agreeConsent()" [disabled]="!consentChecked"
+          class="mt-3 w-full rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-700 disabled:opacity-50"
+        >Agree &amp; continue</button>
+      </div>
+
+      <!-- age/sex quick input (shown until age provided) -->
+      <div *ngIf="needAgeSex && !loading" class="rounded-2xl bg-white p-4 ring-1 ring-black/5">
+
+        <!-- logged-in: who is the consult for? -->
+        <ng-container *ngIf="askConsultFor && consultFor === null">
+          <p class="mb-3 text-sm text-teal-900/80">Who is this consultation for?</p>
+          <div class="flex gap-2">
+            <button (click)="chooseSelf()" class="flex-1 rounded-lg border border-black/10 py-2 text-sm text-teal-900/70 hover:border-teal-600">Myself</button>
+            <button (click)="chooseOther()" class="flex-1 rounded-lg border border-black/10 py-2 text-sm text-teal-900/70 hover:border-teal-600">Someone else</button>
+          </div>
+        </ng-container>
+
+        <!-- self + saved details: confirm or edit -->
+        <ng-container *ngIf="consultFor === 'self' && !editingDetails">
+          <p class="mb-1 text-sm text-teal-900/80">Are these details still correct?</p>
+          <p class="mb-3 text-sm font-medium text-teal-900">
+            {{ age }} yrs
+            <span *ngIf="sex"> · {{ sex | titlecase }}</span>
+            <span *ngIf="!sex && profileGender"> · {{ profileGender | titlecase }}</span>
+          </p>
+          <div class="flex gap-2">
+            <button (click)="confirmSelf()" class="flex-1 rounded-lg bg-teal-600 py-2 text-sm font-semibold text-white hover:bg-teal-700">Yes, that's me</button>
+            <button (click)="editSelf()" class="rounded-lg border border-black/10 px-4 py-2 text-sm text-teal-900/70">Edit</button>
+          </div>
+        </ng-container>
+
+        <!-- raw inputs: editing self, someone else, or an anonymous user -->
+        <ng-container *ngIf="editingDetails || !askConsultFor">
+          <div class="mb-3 flex gap-2">
+            <button (click)="sex = 'female'" class="flex-1 rounded-lg border py-2 text-sm"
+              [ngClass]="sex === 'female' ? 'border-teal-600 bg-teal-50 text-teal-900' : 'border-black/10 text-teal-900/70'">Female</button>
+            <button (click)="sex = 'male'" class="flex-1 rounded-lg border py-2 text-sm"
+              [ngClass]="sex === 'male' ? 'border-teal-600 bg-teal-50 text-teal-900' : 'border-black/10 text-teal-900/70'">Male</button>
+          </div>
+          <div class="flex gap-2">
+            <input type="number" [(ngModel)]="age" placeholder="Age (18+)"
+              class="flex-1 rounded-lg border border-black/10 px-3 py-2 text-sm outline-none focus:border-teal-600" />
+            <button (click)="submitDetails()" class="rounded-lg bg-teal-600 px-5 py-2 text-sm font-semibold text-white hover:bg-teal-700">Submit</button>
+          </div>
+        </ng-container>
+      </div>
+
+      <!-- emergency card -->
+      <div *ngIf="emergency" class="rounded-2xl border-2 border-red-500 bg-red-50 p-5 text-center">
+        <span class="material-icons text-red-600" style="font-size:32px">emergency</span>
+        <p class="mt-2 font-heading text-lg font-bold text-red-700">Seek urgent care now</p>
+        <p class="mt-1 text-sm text-red-700/80">
+          Call {{ emergencyNumbers.all }} (all emergencies) or {{ emergencyNumbers.ambulance }} (ambulance), or go to the nearest emergency room.
+        </p>
+        <div class="mt-3 flex justify-center gap-2">
+          <a [href]="'tel:' + emergencyNumbers.all" class="rounded-full bg-red-600 px-5 py-2 text-sm font-semibold text-white">Call {{ emergencyNumbers.all }}</a>
+          <a [href]="'tel:' + emergencyNumbers.ambulance" class="rounded-full border border-red-600 px-5 py-2 text-sm font-semibold text-red-700">Call {{ emergencyNumbers.ambulance }}</a>
+        </div>
+      </div>
+
+      <!-- report card -->
+      <div *ngIf="report" class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5 animate-fade-up">
+        <!-- header -->
+        <div class="flex items-start justify-between">
+          <div>
+            <h2 class="font-display text-2xl font-semibold text-teal-900">Your Health Summary</h2>
+            <p class="text-xs text-teal-900/50">{{ report.generatedAt | date:'medium' }}</p>
+          </div>
+          <button (click)="shareReport()" class="flex items-center gap-1 text-sm text-teal-700 hover:text-teal-900">
+            <span class="material-icons" style="font-size:16px">ios_share</span> Share
+          </button>
+        </div>
+
+        <p class="mt-3 text-[15px] text-teal-900/80">{{ report.summary }}</p>
+        <p class="mt-2 text-sm italic text-teal-900/60">A doctor can give you personalised guidance — and peace of mind.</p>
+
+        <!-- continue to a licensed doctor -->
+        <div class="mt-4 rounded-xl bg-teal-50 p-4">
+          <p class="font-heading font-semibold text-teal-900">Continue to a licensed doctor</p>
+          <ul class="mt-2 space-y-1.5">
+            <li *ngFor="let b of ['Find doctors near you','A doctor reviews your concerns and next steps','Get a referral or tests advised, if needed','Your summary is ready to share with any doctor']"
+              class="flex items-start gap-2 text-sm text-teal-900/80">
+              <span class="material-icons text-teal-600" style="font-size:16px">check_circle</span>{{ b }}
+            </li>
+          </ul>
+          <button (click)="connectDoctor()" class="mt-3 w-full rounded-xl bg-teal-600 px-4 py-3 text-sm font-semibold text-white hover:bg-teal-700">
+            Connect with a doctor →
+          </button>
+        </div>
+
+        <!-- Assessment & Plan -->
+        <button (click)="reportOpen.causes = !reportOpen.causes" class="mt-4 flex w-full items-center justify-between border-t border-black/5 pt-3 text-left">
+          <span class="font-heading font-semibold text-teal-900">Summary &amp; things to discuss</span>
+          <span class="material-icons text-teal-600">{{ reportOpen.causes ? 'expand_less' : 'expand_more' }}</span>
+        </button>
+        <div *ngIf="reportOpen.causes" class="mt-2 space-y-3">
+          <p *ngIf="report.assessmentIntro" class="text-sm text-teal-900/70">{{ report.assessmentIntro }}</p>
+
+          <p class="text-xs font-semibold uppercase tracking-wide text-teal-900/50">Possible areas to discuss with a doctor</p>
+          <div class="space-y-2">
+            <div *ngFor="let c of report.possibleCauses; let i = index" class="rounded-lg bg-teal-50 px-3 py-2">
+              <div class="flex items-center justify-between">
+                <span class="text-sm font-semibold text-teal-900">{{ i + 1 }}. {{ c.cause }}</span>
+                <span class="text-xs uppercase text-teal-600">{{ c.likelihood }}</span>
+              </div>
+              <p *ngIf="c.note" class="mt-0.5 text-xs text-teal-900/70">{{ c.note }}</p>
+            </div>
+          </div>
+
+          <div *ngIf="report.plan">
+            <p class="text-xs font-semibold uppercase tracking-wide text-teal-900/50">Topics a doctor may explore</p>
+
+            <div *ngIf="report.plan.labs?.length" class="mt-2">
+              <p class="text-sm font-semibold text-teal-900">Tests a doctor might discuss</p>
+              <ul class="mt-1 space-y-1">
+                <li *ngFor="let l of report.plan.labs" class="flex items-start gap-2 text-sm text-teal-900/80">
+                  <span class="material-icons text-teal-600" style="font-size:14px">science</span>
+                  <span><b>{{ l.name }}</b><span *ngIf="l.why"> — {{ l.why }}</span></span>
+                </li>
+              </ul>
+            </div>
+
+            <div *ngIf="report.plan.imaging?.length" class="mt-2">
+              <p class="text-sm font-semibold text-teal-900">Imaging a doctor might discuss</p>
+              <ul class="mt-1 space-y-1">
+                <li *ngFor="let im of report.plan.imaging" class="flex items-start gap-2 text-sm text-teal-900/80">
+                  <span class="material-icons text-teal-600" style="font-size:14px">biotech</span>
+                  <span><b>{{ im.name }}</b><span *ngIf="im.why"> — {{ im.why }}</span></span>
+                </li>
+              </ul>
+            </div>
+
+            <div *ngIf="report.plan.management?.length" class="mt-2">
+              <p class="text-sm font-semibold text-teal-900">Self-care &amp; home remedies you can try</p>
+              <ul class="mt-1 space-y-1">
+                <li *ngFor="let m of report.plan.management" class="flex items-start gap-2 text-sm text-teal-900/80">
+                  <span class="material-icons text-teal-600" style="font-size:14px">healing</span>{{ m }}
+                </li>
+              </ul>
+            </div>
+
+            <div *ngIf="report.plan.referral" class="mt-2">
+              <p class="text-sm font-semibold text-teal-900">Referral</p>
+              <p class="mt-0.5 text-sm text-teal-900/80">{{ report.plan.referral }}</p>
+            </div>
+
+            <div *ngIf="report.plan.whenToSeekUrgent" class="mt-2 rounded-lg border border-red-300 bg-red-50 p-2">
+              <p class="text-sm font-semibold text-red-700">When to seek urgent care</p>
+              <p class="mt-0.5 text-sm text-red-700/90">{{ report.plan.whenToSeekUrgent }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- SOAP -->
+        <button (click)="reportOpen.soap = !reportOpen.soap" class="mt-3 flex w-full items-center justify-between border-t border-black/5 pt-3 text-left">
+          <span class="font-heading font-semibold text-teal-900">Summary to share with your doctor</span>
+          <span class="material-icons text-teal-600">{{ reportOpen.soap ? 'expand_less' : 'expand_more' }}</span>
+        </button>
+        <div *ngIf="reportOpen.soap" class="mt-2 space-y-3 text-sm text-teal-900/80">
+          <div *ngFor="let s of [
+            {label:'Subjective', val: report.soap.subjective},
+            {label:'Objective', val: report.soap.objective},
+            {label:'Assessment', val: report.soap.assessment},
+            {label:'Plan', val: report.soap.plan}]">
+            <p class="font-semibold text-teal-900">{{ s.label }}</p>
+            <ul class="mt-0.5 space-y-0.5">
+              <li *ngFor="let line of toBullets(s.val)" class="flex items-start gap-2">
+                <span class="text-teal-600">•</span>{{ line }}
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- suggested specialist + downloads -->
+        <div class="mt-4 rounded-lg bg-teal-900 px-4 py-3 text-white">
+          <p class="text-sm">Suggested specialist</p>
+          <p class="font-heading text-lg font-bold">{{ report.suggestedSpecialty }}</p>
+        </div>
+        <button (click)="downloadPdf()" class="mt-3 flex w-full items-center justify-center gap-1 rounded-xl border border-teal-600 px-4 py-3 text-sm font-semibold text-teal-700 hover:bg-teal-50">
+          <span class="material-icons" style="font-size:18px">download</span> Download report (PDF)
+        </button>
+
+        <!-- prominent closing call-to-action -->
+        <div class="mt-4 rounded-xl border border-teal-200 bg-teal-50 p-4 text-center">
+          <p class="material-icons text-teal-600" style="font-size:26px">medical_services</p>
+          <p class="font-heading font-bold text-teal-900">This is not a diagnosis</p>
+          <p class="mt-1 text-sm text-teal-900/70">These are possibilities to discuss with a doctor. A licensed {{ report.suggestedSpecialty }} can examine you, discuss your symptoms, and advise the right next steps for you.</p>
+          <button (click)="connectDoctor()" class="mt-3 w-full rounded-xl bg-teal-600 px-4 py-3 text-sm font-bold text-white hover:bg-teal-700">
+            Consult a {{ report.suggestedSpecialty }} now →
+          </button>
+        </div>
+      </div>
+
+      <!-- doctor discovery loading skeletons -->
+      <div *ngIf="doctorsLoading" class="space-y-2">
+        <div class="flex items-center gap-2 text-sm text-teal-900/60">
+          <span class="material-icons animate-spin360 text-teal-500" style="font-size:18px">progress_activity</span>
+          Searching doctors near you…
+        </div>
+        <div *ngFor="let s of [1,2,3]" class="flex items-center gap-3 rounded-2xl bg-white p-4 ring-1 ring-black/5">
+          <div class="h-11 w-11 animate-pulse rounded-full bg-teal-100"></div>
+          <div class="flex-1 space-y-2">
+            <div class="h-3 w-1/2 animate-pulse rounded bg-teal-100"></div>
+            <div class="h-2.5 w-3/4 animate-pulse rounded bg-teal-50"></div>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="doctors.length" class="space-y-3">
+        <p class="font-heading font-semibold text-teal-900">{{ (report?.suggestedSpecialty || state.suggestedSpecialty) || 'Doctors' }} near you</p>
+
+        <!-- recommended pick (rich card) -->
+        <div *ngIf="recommendedDoctor as rec" class="rounded-2xl border-2 border-teal-500 bg-white p-4">
+          <div class="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-teal-700">
+            <span class="material-icons" style="font-size:15px">recommend</span> Our recommendation
+          </div>
+          <div class="mt-2 flex items-start gap-3">
+            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-base font-bold text-white"
+              [style.background]="avatarColor(rec.name)">{{ initials(rec.name) }}</div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-start justify-between gap-2">
+                <p class="font-heading font-bold text-teal-900">{{ rec.name }}</p>
+                <div *ngIf="rec.rating" class="flex shrink-0 items-center gap-1 text-sm text-amber-600">
+                  <span class="material-icons" style="font-size:16px">star</span>{{ rec.rating }}
+                  <span *ngIf="rec.userRatingsTotal" class="text-xs text-teal-900/40">({{ rec.userRatingsTotal }})</span>
+                </div>
+              </div>
+              <p class="mt-0.5 text-sm text-teal-900/70">{{ recommendReason(rec) }}</p>
+              <p *ngIf="rec.address" class="mt-1 text-xs text-teal-900/60"><span class="material-icons align-middle" style="font-size:13px">place</span> {{ rec.address }}</p>
+              <p *ngIf="rec.hours" class="mt-0.5 text-xs text-teal-900/60"><span class="material-icons align-middle" style="font-size:13px">schedule</span> {{ rec.hours }}</p>
+              <span *ngIf="rec.openNow === true" class="mt-1 inline-block rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-semibold text-green-700">Open now</span>
+              <span *ngIf="rec.openNow === false" class="mt-1 inline-block rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-700">Closed now</span>
+            </div>
+          </div>
+          <p class="mt-3 text-xs text-teal-900/60">How to book: call the clinic, book on their website, or get directions and visit.</p>
+          <div class="mt-2 grid grid-cols-3 gap-2">
+            <a [href]="rec.phone ? 'tel:' + rec.phone : null" [class.opacity-40]="!rec.phone"
+              class="flex items-center justify-center gap-1 rounded-lg bg-teal-600 py-2 text-xs font-semibold text-white">
+              <span class="material-icons" style="font-size:15px">call</span> Call
+            </a>
+            <a [href]="rec.website || rec.mapsUrl" target="_blank" rel="noopener"
+              class="flex items-center justify-center gap-1 rounded-lg border border-teal-600 py-2 text-xs font-semibold text-teal-700">
+              <span class="material-icons" style="font-size:15px">event</span> {{ rec.website ? 'Book online' : 'Details' }}
+            </a>
+            <a [href]="rec.mapsUrl" target="_blank" rel="noopener"
+              class="flex items-center justify-center gap-1 rounded-lg border border-teal-600 py-2 text-xs font-semibold text-teal-700">
+              <span class="material-icons" style="font-size:15px">directions</span> Directions
+            </a>
+          </div>
+        </div>
+
+        <!-- other options -->
+        <p *ngIf="doctors.length > 1" class="text-xs font-semibold uppercase tracking-wide text-teal-900/50">More options nearby</p>
+        <ng-container *ngFor="let d of doctors">
+          <div *ngIf="d !== recommendedDoctor" class="rounded-2xl bg-white p-4 ring-1 ring-black/5">
+            <div class="flex items-start gap-3">
+              <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
+                [style.background]="avatarColor(d.name)">{{ initials(d.name) }}</div>
+              <div class="min-w-0 flex-1">
+                <div class="flex items-start justify-between gap-2">
+                  <div>
+                    <p class="font-medium text-teal-900">{{ d.name }}</p>
+                    <p class="text-xs text-teal-900/60">{{ d.address }}</p>
+                    <p *ngIf="d.hours" class="text-xs text-teal-900/50">{{ d.hours }}</p>
+                  </div>
+                  <div *ngIf="d.rating" class="flex shrink-0 items-center gap-1 text-sm text-amber-600">
+                    <span class="material-icons" style="font-size:16px">star</span>{{ d.rating }}
+                    <span *ngIf="d.userRatingsTotal" class="text-xs text-teal-900/40">({{ d.userRatingsTotal }})</span>
+                  </div>
+                </div>
+                <div class="mt-2 flex flex-wrap items-center gap-4">
+                  <a *ngIf="d.phone" [href]="'tel:' + d.phone" class="inline-flex items-center gap-1 text-sm font-medium text-teal-700 hover:text-teal-900">
+                    <span class="material-icons" style="font-size:16px">call</span> Call
+                  </a>
+                  <a *ngIf="d.website" [href]="d.website" target="_blank" rel="noopener" class="inline-flex items-center gap-1 text-sm font-medium text-teal-700 hover:text-teal-900">
+                    <span class="material-icons" style="font-size:16px">event</span> Book
+                  </a>
+                  <a *ngIf="d.mapsUrl" [href]="d.mapsUrl" target="_blank" rel="noopener" class="inline-flex items-center gap-1 text-sm font-medium text-teal-700 hover:text-teal-900">
+                    <span class="material-icons" style="font-size:16px">place</span> Maps
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+        <p class="text-[11px] text-teal-900/40">Results from Google/OpenStreetMap. Please verify details before visiting.</p>
+      </div>
+
+      <div #scrollAnchor></div>
+    </div>
+  </main>
+
+  <!-- composer (chat) — hidden once the report is ready -->
+  <footer *ngIf="!consultComplete" class="border-t border-black/5 bg-white px-3 py-2 sm:px-4 sm:py-3" style="padding-bottom: max(0.5rem, env(safe-area-inset-bottom));">
+    <div class="mx-auto flex max-w-2xl items-end gap-2">
+      <textarea #composer [(ngModel)]="input" (input)="autoGrow(composer)" (keydown.enter)="onEnter($event)"
+        [disabled]="emergency" rows="1" placeholder="Reply…  (Shift+Enter for a new line)"
+        class="max-h-40 flex-1 resize-none overflow-y-auto rounded-2xl border border-black/10 px-4 py-3 text-base leading-snug outline-none focus:border-teal-600 disabled:bg-gray-100"></textarea>
+      <button (click)="submitInput()" [disabled]="emergency || loading"
+        class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-teal-600 text-white hover:bg-teal-700 disabled:opacity-50">
+        <span class="material-icons" style="font-size:22px">send</span>
+      </button>
+    </div>
+    <p class="mx-auto mt-1.5 max-w-2xl text-center text-[10px] text-teal-900/40">
+      AI assistant, not a licensed physician. Not medical advice, diagnosis, or prescriptions.
+      <a routerLink="/disclaimer" class="underline hover:text-teal-600">Disclaimer</a>
+      ·
+      <a routerLink="/privacy" class="underline hover:text-teal-600">Privacy</a>
+      ·
+      <a routerLink="/terms" class="underline hover:text-teal-600">Terms</a>
+    </p>
+  </footer>
+
+  <!-- consultation complete — chat locked, continue with a doctor -->
+  <footer *ngIf="consultComplete" class="border-t border-black/5 bg-white px-3 py-3 sm:px-4" style="padding-bottom: max(0.75rem, env(safe-area-inset-bottom));">
+    <div class="mx-auto max-w-2xl">
+      <p class="text-center text-[13px] font-medium text-teal-900 sm:text-sm">
+        Your report is ready. Continue with a licensed doctor.
+      </p>
+      <div class="mt-2.5 flex flex-col gap-2 sm:flex-row">
+        <button (click)="connectDoctor()"
+          class="flex w-full items-center justify-center gap-1.5 whitespace-nowrap rounded-xl bg-teal-600 px-4 py-3 text-sm font-semibold text-white hover:bg-teal-700 sm:flex-1">
+          <span class="material-icons" style="font-size:18px">medical_services</span> Connect with a doctor
+        </button>
+        <button (click)="restart()"
+          class="flex w-full items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-teal-600 px-4 py-3 text-sm font-semibold text-teal-700 hover:bg-teal-50 sm:w-auto">
+          <span class="material-icons" style="font-size:18px">refresh</span> New chat
+        </button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- location prompt modal -->
+  <div *ngIf="askCity" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+    <div class="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+      <div class="flex items-center justify-between">
+        <h3 class="font-heading text-lg font-bold text-teal-900">Where should I look?</h3>
+        <button (click)="askCity = false" class="material-icons text-teal-900/50">close</button>
+      </div>
+      <p class="mt-1 text-sm text-teal-900/60">
+        Enter your city/area to find {{ (report?.suggestedSpecialty || state.suggestedSpecialty) || 'doctors' }} nearby.
+      </p>
+      <div class="mt-3 flex gap-2">
+        <input [(ngModel)]="city" (keyup.enter)="submitCity()" placeholder="e.g. Balasore, Odisha"
+          class="flex-1 rounded-lg border border-black/10 px-3 py-2.5 text-sm outline-none focus:border-teal-600" autofocus />
+        <button (click)="submitCity()" class="rounded-lg bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white">Search</button>
+      </div>
+      <button (click)="useMyLocation()" class="mt-3 flex w-full items-center justify-center gap-1 rounded-lg border border-teal-600 py-2.5 text-sm font-semibold text-teal-700 hover:bg-teal-50">
+        <span class="material-icons" style="font-size:16px">my_location</span> Use my current location
+      </button>
+      <p *ngIf="locError" class="mt-2 text-xs text-red-600">{{ locError }}</p>
+    </div>
+  </div>
+
+  <!-- PIN auth gate (account creation / login) -->
+  <app-auth-gate
+    *ngIf="showAuth"
+    [pendingAction]="pendingAction"
+    [sessionId]="state.sessionId"
+    [triageAge]="age"
+    [triageSex]="sex"
+    (authSuccess)="onAuthSuccess($event)"
+    (cancel)="showAuth = false"
+  ></app-auth-gate>
+
+  <!-- consult history (logged-in) -->
+  <app-consult-history
+    *ngIf="showHistory"
+    (openSession)="openPastSession($event)"
+    (close)="showHistory = false"
+    (loggedOut)="onLoggedOut()"
+  ></app-consult-history>
+
+  </div>
+  </mat-sidenav-content>
+</mat-sidenav-container>

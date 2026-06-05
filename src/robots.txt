@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /triage
+
+Sitemap: https://www.knocdoc.in/sitemap.xml
