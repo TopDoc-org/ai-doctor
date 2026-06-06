@@ -42,7 +42,7 @@
   <div class="flex h-[100dvh] flex-col bg-cream">
   <!-- emergency banner -->
   <div class="bg-red-600 px-4 py-2 text-center text-xs font-medium text-white">
-    If this is an emergency, call {{ emergencyNumbers.all }} or {{ emergencyNumbers.ambulance }} (ambulance) immediately.
+    If this is an emergency{{ countryName ? ' in ' + countryName : '' }}, call {{ emergencyNumbers.all }} or {{ emergencyNumbers.ambulance }} (ambulance) immediately.
   </div>
 
   <!-- header -->

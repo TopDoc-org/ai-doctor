@@ -11,11 +11,11 @@ const routes: Routes = [
     component: LandingComponent,
     data: {
       seo: {
-        title: 'AI Doctor & Free Symptom Checker India | HealthGuide AI by KnocDoc',
+        title: 'AI Doctor & Free Symptom Checker %COUNTRY% | HealthGuide AI by KnocDoc',
         description:
-          'Free AI doctor & symptom checker for India. Describe your symptoms, get instant AI health guidance, learn which specialist to see, and find trusted doctors near you. No sign-up. HealthGuide AI by KnocDoc.',
+          'Free AI doctor & symptom checker for %COUNTRY%. Describe your symptoms, get instant AI health guidance, learn which specialist to see, and find trusted doctors near you. No sign-up. HealthGuide AI by KnocDoc.',
         keywords:
-          'AI doctor India, AI symptom checker, AI health assistant, AI diagnosis, AI health report, free online doctor India, find doctor near me, AI health agent',
+          'AI doctor %COUNTRY%, AI symptom checker, AI health assistant, AI diagnosis, AI health report, free online doctor %COUNTRY%, find doctor near me, AI health agent',
       },
     },
   },
@@ -26,7 +26,7 @@ const routes: Routes = [
       seo: {
         title: 'Privacy Policy | HealthGuide AI by KnocDoc',
         description:
-          'How HealthGuide AI by KnocDoc collects, uses, and protects your health information. Privacy-first AI health assistant for India.',
+          'How HealthGuide AI by KnocDoc collects, uses, and protects your health information. Privacy-first AI health assistant for %COUNTRY%.',
       },
     },
   },
@@ -37,7 +37,7 @@ const routes: Routes = [
       seo: {
         title: 'Terms of Use | HealthGuide AI by KnocDoc',
         description:
-          'Terms of use for HealthGuide AI by KnocDoc, the free AI health-information assistant and symptom checker for India.',
+          'Terms of use for HealthGuide AI by KnocDoc, the free AI health-information assistant and symptom checker for %COUNTRY%.',
       },
     },
   },
@@ -48,7 +48,7 @@ const routes: Routes = [
       seo: {
         title: 'Medical Disclaimer | HealthGuide AI by KnocDoc',
         description:
-          'HealthGuide AI is an AI health-information assistant, not a licensed physician. Read the medical disclaimer. In an emergency in India call 112 or 108.',
+          'HealthGuide AI is an AI health-information assistant, not a licensed physician. Read the medical disclaimer. In an emergency in %COUNTRY% call 112 or 108.',
       },
     },
   },

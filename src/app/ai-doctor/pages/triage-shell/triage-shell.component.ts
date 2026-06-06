@@ -4,6 +4,7 @@ import { environment } from '../../../../environments/environment';
 import { AiDoctorApiService } from '../../services/ai-doctor-api.service';
 import { AiDoctorStateService } from '../../services/ai-doctor-state.service';
 import { GeolocationService } from '../../services/geolocation.service';
+import { CountryService } from '../../services/country.service';
 import { ChatMessage, Doctor, MessageResponse, Report } from '../../models';
 
 @Component({
@@ -15,7 +16,10 @@ export class TriageShellComponent implements OnInit {
   @ViewChild('scrollAnchor') scrollAnchor?: ElementRef<HTMLDivElement>;
   @ViewChild('composer') composer?: ElementRef<HTMLTextAreaElement>;
 
+  // Country-aware emergency numbers + name (resolved by CountryService on init;
+  // start with the environment fallback so the UI renders immediately).
   emergencyNumbers = environment.emergencyNumbers;
+  countryName: string | null = null;
   appName = environment.appName;
 
   input = '';
@@ -67,7 +71,8 @@ export class TriageShellComponent implements OnInit {
     private router: Router,
     public api: AiDoctorApiService,
     public state: AiDoctorStateService,
-    private geo: GeolocationService
+    private geo: GeolocationService,
+    private country: CountryService
   ) {}
 
   get messages(): ChatMessage[] {
@@ -104,6 +109,13 @@ export class TriageShellComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // Resolve country context (IP-based, cached) -> swap in local emergency
+    // numbers + country name. Server may still override per-message later.
+    this.country.init().then(() => {
+      this.emergencyNumbers = this.country.emergencyNumbers;
+      this.countryName = this.country.countryName;
+    });
+
     const seed = this.route.snapshot.queryParamMap.get('q');
     const wantsLogin = this.route.snapshot.queryParamMap.get('login') === '1';
     if (this.state.isLoggedIn) this.loadProfileDetails();

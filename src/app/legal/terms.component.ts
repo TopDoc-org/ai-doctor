@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { environment } from '../../environments/environment';
+import { CountryService } from '../ai-doctor/services/country.service';
 
 @Component({
   selector: 'app-terms',
@@ -30,14 +31,14 @@ import { environment } from '../../environments/environment';
 
       <h2>3. Eligibility</h2>
       <p>
-        The Service is intended for adults (18 years or older) in India. By using it you
+        The Service is intended for adults (18 years or older){{ inCountry }}. By using it you
         confirm you are eligible.
       </p>
 
       <h2>4. Not for emergencies</h2>
       <p>
-        Do not use the Service for medical emergencies. Call 112 or 108 immediately in
-        an emergency.
+        Do not use the Service for medical emergencies. Call {{ emergencyNumbers.all }} or
+        {{ emergencyNumbers.ambulance }} immediately in an emergency.
       </p>
 
       <h2>5. Doctor listings are third-party data</h2>
@@ -92,6 +93,21 @@ import { environment } from '../../environments/environment';
     </app-legal-layout>
   `,
 })
-export class TermsComponent {
+export class TermsComponent implements OnInit {
   appName = environment.appName;
+  emergencyNumbers = environment.emergencyNumbers;
+  countryName: string | null = null;
+
+  constructor(private country: CountryService) {}
+
+  get inCountry(): string {
+    return this.countryName ? ` in ${this.countryName}` : '';
+  }
+
+  ngOnInit(): void {
+    this.country.init().then(() => {
+      this.countryName = this.country.countryName;
+      this.emergencyNumbers = this.country.emergencyNumbers;
+    });
+  }
 }

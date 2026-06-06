@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { environment } from '../../environments/environment';
+import { CountryService } from '../ai-doctor/services/country.service';
 
 @Component({
   selector: 'app-disclaimer',
@@ -39,9 +40,9 @@ import { environment } from '../../environments/environment';
       <h2>Emergencies</h2>
       <p>
         <strong>{{ appName }} is not for emergencies.</strong> If you think you may
-        have a medical emergency, call <strong>112</strong> (all emergencies) or
-        <strong>108</strong> (ambulance) immediately, or go to the nearest emergency
-        department.
+        have a medical emergency{{ inCountry }}, call <strong>{{ emergencyNumbers.all }}</strong>
+        (all emergencies) or <strong>{{ emergencyNumbers.ambulance }}</strong> (ambulance)
+        immediately, or go to the nearest emergency department.
       </p>
 
       <h2>Doctor listings</h2>
@@ -67,6 +68,21 @@ import { environment } from '../../environments/environment';
     </app-legal-layout>
   `,
 })
-export class DisclaimerComponent {
+export class DisclaimerComponent implements OnInit {
   appName = environment.appName;
+  emergencyNumbers = environment.emergencyNumbers;
+  countryName: string | null = null;
+
+  constructor(private country: CountryService) {}
+
+  get inCountry(): string {
+    return this.countryName ? ` in ${this.countryName}` : '';
+  }
+
+  ngOnInit(): void {
+    this.country.init().then(() => {
+      this.countryName = this.country.countryName;
+      this.emergencyNumbers = this.country.emergencyNumbers;
+    });
+  }
 }

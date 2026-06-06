@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { environment } from '../../environments/environment';
+import { CountryService } from '../ai-doctor/services/country.service';
 
 @Component({
   selector: 'app-landing',
@@ -11,6 +12,8 @@ export class LandingComponent implements OnInit, OnDestroy {
   appName = environment.appName;
   query = '';
   placeholder = '';
+  countryName: string | null = null;
+  emergencyNumbers = environment.emergencyNumbers;
 
   // Rotating hero slides (text-only carousel) — headline + supporting line.
   heroSlides = [
@@ -60,10 +63,33 @@ export class LandingComponent implements OnInit, OnDestroy {
     { icon: 'menu_book', label: 'Educational information' },
   ];
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private country: CountryService) {}
+
+  // Label for the location banner. Avoids an escaped apostrophe in the template.
+  get locationLabel(): string {
+    return this.countryName ? `You are in ${this.countryName}` : 'Detecting your location…';
+  }
+
+  // Country-aware copy with neutral fallbacks when the country is unknown.
+  // e.g. "India's" / "Your", and "built for India" / "built for you".
+  get countryPossessive(): string {
+    return this.countryName ? `${this.countryName}'s` : 'Your';
+  }
+  get countryForCopy(): string {
+    return this.countryName || 'you';
+  }
+  // " in India" when known, "" otherwise — used inline mid-sentence.
+  get inCountry(): string {
+    return this.countryName ? ` in ${this.countryName}` : '';
+  }
 
   ngOnInit(): void {
     this.typePlaceholder();
+    // Resolve country context (IP-based, cached) for the location banner.
+    this.country.init().then(() => {
+      this.countryName = this.country.countryName;
+      this.emergencyNumbers = this.country.emergencyNumbers;
+    });
   }
 
   ngOnDestroy(): void {
