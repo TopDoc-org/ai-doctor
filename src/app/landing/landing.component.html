@@ -12,9 +12,15 @@
 
   <!-- nav -->
   <nav class="relative z-10 mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-5 sm:px-6">
-    <div class="flex min-w-0 shrink items-center gap-1 truncate font-heading text-xl font-extrabold text-teal-900 sm:text-2xl">
-      <span class="truncate">{{ appName }}</span>
-      <span class="material-icons shrink-0 text-teal-500" style="font-size:18px">auto_awesome</span>
+    <div class="flex min-w-0 shrink flex-col leading-tight">
+      <div class="flex items-center gap-1 truncate font-heading text-xl font-extrabold text-teal-900 sm:text-2xl">
+        <span class="truncate">{{ appName }}</span>
+        <span class="material-icons shrink-0 text-teal-500" style="font-size:18px">auto_awesome</span>
+      </div>
+      <span class="flex items-center gap-1 truncate text-[11px] font-semibold text-teal-900/50">
+        powered by
+        <span class="font-extrabold"><span style="color:#0a1480">Knoc</span><span style="color:#4fb0f9">Doc</span></span>
+      </span>
     </div>
     <div class="hidden items-center gap-8 font-body text-[15px] text-teal-900 md:flex">
       <a class="hover:text-teal-600">Find Doctors</a>
@@ -29,7 +35,7 @@
 
   <!-- hero -->
   <main class="relative z-10 mx-auto max-w-4xl px-6 pt-6 text-center md:pt-10">
-    <h1 class="font-display text-5xl leading-tight text-teal-900 md:text-7xl">
+    <h1 class="font-display text-4xl leading-tight text-teal-900 sm:text-5xl md:text-7xl">
       <span class="italic">Health</span> answers, <br class="hidden md:block" />
       <span class="italic">always</span> within reach.
       <!-- Crawlable, keyword-bearing context for search engines (visually hidden). -->
@@ -129,10 +135,10 @@
       <div class="mt-4 space-y-3">
         <details class="group rounded-2xl border border-teal-200 bg-white/70 p-4">
           <summary class="cursor-pointer font-heading text-base font-semibold text-teal-900">
-            Is HealthGuide AI free?
+            Is DoctoGuide free?
           </summary>
           <p class="mt-2 font-body text-sm leading-relaxed text-teal-900/70">
-            Yes. HealthGuide AI by KnocDoc is 100% free to start. There is no sign-up and no credit
+            Yes. DoctoGuide by KnocDoc is 100% free to start. There is no sign-up and no credit
             card needed to describe your symptoms and get AI health guidance.
           </p>
         </details>
@@ -141,7 +147,7 @@
             Is this an AI doctor or real medical advice?
           </summary>
           <p class="mt-2 font-body text-sm leading-relaxed text-teal-900/70">
-            HealthGuide AI is an AI health-information assistant, not a licensed physician. It gives
+            DoctoGuide is an AI health-information assistant, not a licensed physician. It gives
             educational information and suggests which specialist to see, but it does not provide a
             diagnosis, treatment, or prescription. In an emergency{{ inCountry }}, call {{ emergencyNumbers.all }} or {{ emergencyNumbers.ambulance }}.
           </p>
@@ -151,7 +157,7 @@
             Which specialist should I see for my symptoms?
           </summary>
           <p class="mt-2 font-body text-sm leading-relaxed text-teal-900/70">
-            Describe what you're feeling in plain language and HealthGuide AI reads your concern and
+            Describe what you're feeling in plain language and DoctoGuide reads your concern and
             points you to the right speciality, then helps you find trusted doctors near you{{ inCountry }}.
           </p>
         </details>
@@ -166,10 +172,10 @@
         </details>
         <details class="group rounded-2xl border border-teal-200 bg-white/70 p-4">
           <summary class="cursor-pointer font-heading text-base font-semibold text-teal-900">
-            Can HealthGuide AI help me find a doctor near me{{ inCountry }}?
+            Can DoctoGuide help me find a doctor near me{{ inCountry }}?
           </summary>
           <p class="mt-2 font-body text-sm leading-relaxed text-teal-900/70">
-            Yes. After reviewing your symptoms, HealthGuide AI can help you find licensed doctors
+            Yes. After reviewing your symptoms, DoctoGuide can help you find licensed doctors
             near you by city or location, with ratings, hours, and contact details.
           </p>
         </details>

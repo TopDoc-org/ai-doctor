@@ -21,8 +21,8 @@ export interface AuthSuccess {
   templateUrl: './auth-gate.component.html',
 })
 export class AuthGateComponent implements OnInit {
-  // 'pdf' | 'doctors' gates run a pending action on success; null = pure login.
-  @Input() pendingAction: 'pdf' | 'doctors' | null = null;
+  // 'pdf' | 'soap' | 'doctors' gates run a pending action on success; null = pure login.
+  @Input() pendingAction: 'pdf' | 'soap' | 'doctors' | null = null;
   @Input() sessionId: string | null = null;
 
   // Age/sex captured during the anonymous triage chat. On a brand-new account
@@ -68,7 +68,7 @@ export class AuthGateComponent implements OnInit {
     if (this.authStep === 'details') return 'A few details';
     if (this.authStep === 'register')
       return this.registerPinStep === 'create' ? 'Create your PIN' : 'Confirm your PIN';
-    return 'One last step';
+    return 'Just One SStep';
   }
 
   get displayName(): string {

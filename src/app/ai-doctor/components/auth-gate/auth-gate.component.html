@@ -1,5 +1,5 @@
 <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-  <div class="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+  <div class="max-h-[90dvh] w-full max-w-sm overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
     <!-- header -->
     <div class="flex items-center justify-between">
       <h3 class="font-heading text-lg font-bold text-teal-900">{{ title }}</h3>
@@ -10,7 +10,7 @@
     <ng-container *ngIf="authStep === 'phone'">
       <p class="mt-1 text-sm text-teal-900/60">
         Sign in or create an account to
-        {{ pendingAction === 'pdf' ? 'download your report' : pendingAction === 'doctors' ? 'see doctors near you' : 'save your consultations' }}.
+        {{ pendingAction === 'pdf' ? 'download your report' : pendingAction === 'soap' ? 'download your SOAP note' : pendingAction === 'doctors' ? 'see doctors near you' : 'save your consultations' }}.
       </p>
       <input
         [(ngModel)]="mobile"

@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { MessageResponse, DoctorsResponse, Report } from '../models';
 import { AiDoctorStateService } from './ai-doctor-state.service';
+import { AffiliateService } from './affiliate.service';
 
 export interface SessionState {
   sessionId: string;
@@ -55,7 +56,11 @@ export class AiDoctorApiService {
   private base = `${environment.serverUrl}${environment.aiBase}`;
   private userBase = `${environment.serverUrl}${(environment as any).userBase}`;
 
-  constructor(private http: HttpClient, private state: AiDoctorStateService) {}
+  constructor(
+    private http: HttpClient,
+    private state: AiDoctorStateService,
+    private affiliate: AffiliateService
+  ) {}
 
   createSession(): Observable<{ sessionId: string; disclaimer: string }> {
     // Tag the new session to the user if logged in (so it lands in their history).
@@ -63,9 +68,13 @@ export class AiDoctorApiService {
     const options = token
       ? { headers: new HttpHeaders({ Authorization: `Bearer ${token}` }) }
       : {};
+    // Tag the session to the referring clinic + digital campaign (utm) if present.
+    const clinicId = this.affiliate.clinicId || undefined;
+    const campaign = this.affiliate.campaign || undefined;
+    const utm = this.affiliate.utm || undefined;
     return this.http.post<{ sessionId: string; disclaimer: string }>(
       `${this.base}/session`,
-      {},
+      { clinicId, campaign, utm },
       options
     );
   }
@@ -108,6 +117,8 @@ export class AiDoctorApiService {
         name,
         mobile,
         userId: userId || undefined,
+        clinicId: this.affiliate.clinicId || undefined,
+        campaign: this.affiliate.campaign || undefined,
         district: location?.district,
         city: location?.city,
         state: location?.state,
@@ -199,13 +210,25 @@ export class AiDoctorApiService {
     lat?: number | null;
     lng?: number | null;
     city?: string | null;
+    clinicId?: string | null;
   }): Observable<DoctorsResponse> {
-    return this.http.post<DoctorsResponse>(`${this.base}/doctors`, payload);
+    // Default the clinicId from the stored campaign ref so the backend can run
+    // affiliate-first matching even if the caller didn't pass it explicitly.
+    const body = {
+      ...payload,
+      clinicId: payload.clinicId ?? this.affiliate.clinicId ?? undefined,
+    };
+    return this.http.post<DoctorsResponse>(`${this.base}/doctors`, body);
   }
 
-  // Returns the report PDF as a Blob (gated server-side by lead capture).
+  // Returns the report PDF as a Blob (gated server-side by lead capture +
+  // Bearer token — must send the auth header or the endpoint 401s).
   downloadReportPdf(sessionId: string): Observable<Blob> {
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${this.state.authToken || ''}`,
+    });
     return this.http.get(`${this.base}/report/${sessionId}/pdf`, {
+      headers,
       responseType: 'blob',
     });
   }

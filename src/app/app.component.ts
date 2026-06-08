@@ -3,6 +3,7 @@ import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { SeoData, SeoService } from './core/seo.service';
+import { AffiliateService } from './ai-doctor/services/affiliate.service';
 
 @Component({
   selector: 'app-root',
@@ -10,19 +11,26 @@ import { SeoData, SeoService } from './core/seo.service';
   styleUrls: ['./app.component.scss'],
 })
 export class AppComponent implements OnInit, OnDestroy {
-  title = 'HealthGuide AI';
+  title = 'DoctoGuide';
   private sub?: Subscription;
 
   constructor(
     private router: Router,
     private route: ActivatedRoute,
     private seo: SeoService,
+    private affiliate: AffiliateService,
   ) {}
 
   ngOnInit(): void {
+    // Capture campaign attribution (?ref=clinicId) on the first load before
+    // any internal navigation strips the query string.
+    this.affiliate.capture();
     this.sub = this.router.events
       .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
       .subscribe(() => {
+        // Re-check in case the app booted on a route that resolves the query
+        // string after init (deep-linked /triage?ref=…).
+        this.affiliate.capture();
         const data = this.collectSeo();
         const urlPath = this.router.url.split('?')[0].split('#')[0] || '/';
         this.seo.update(data, urlPath);

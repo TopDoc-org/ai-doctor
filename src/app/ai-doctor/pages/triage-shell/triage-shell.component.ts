@@ -5,7 +5,8 @@ import { AiDoctorApiService } from '../../services/ai-doctor-api.service';
 import { AiDoctorStateService } from '../../services/ai-doctor-state.service';
 import { GeolocationService } from '../../services/geolocation.service';
 import { CountryService } from '../../services/country.service';
-import { ChatMessage, Doctor, MessageResponse, Report } from '../../models';
+import { ChatMessage, Doctor, MessageResponse, PartnerOffer, Report } from '../../models';
+import { ReportPdfService } from '../../services/report-pdf.service';
 
 @Component({
   selector: 'app-triage-shell',
@@ -15,6 +16,7 @@ import { ChatMessage, Doctor, MessageResponse, Report } from '../../models';
 export class TriageShellComponent implements OnInit {
   @ViewChild('scrollAnchor') scrollAnchor?: ElementRef<HTMLDivElement>;
   @ViewChild('composer') composer?: ElementRef<HTMLTextAreaElement>;
+  @ViewChild('reportTop') reportTop?: ElementRef<HTMLDivElement>;
 
   // Country-aware emergency numbers + name (resolved by CountryService on init;
   // start with the environment fallback so the UI renders immediately).
@@ -29,9 +31,12 @@ export class TriageShellComponent implements OnInit {
   // triage progress toward the report
   progress = 0;
   stepsLeft = 0;
+  // Set once the backend signals no questions remain (stepsLeft === 0): the next
+  // round-trip is the report itself, so we can show the "creating report" state.
+  reportPending = false;
 
   report: Report | null = null;
-  reportOpen = { causes: true, soap: false };
+  reportOpen = { causes: true, soap: true };
 
   // consent gate (before first AI reply)
   showConsent = false;
@@ -53,6 +58,10 @@ export class TriageShellComponent implements OnInit {
 
   // doctor discovery
   doctors: Doctor[] = [];
+  // affiliate-first: partner-clinic doctors shown above the generic results,
+  // plus an optional clinic-wide offer banner.
+  affiliateDoctors: Doctor[] = [];
+  affiliateOffer: PartnerOffer | null = null;
   doctorsLoading = false;
   askCity = false;
   city = '';
@@ -61,7 +70,7 @@ export class TriageShellComponent implements OnInit {
   // auth gate + consult history
   showAuth = false;
   showHistory = false;
-  pendingAction: 'pdf' | 'doctors' | null = null;
+  pendingAction: 'pdf' | 'soap' | 'doctors' | null = null;
 
   // side drawer (account menu)
   showDrawer = false;
@@ -72,7 +81,8 @@ export class TriageShellComponent implements OnInit {
     public api: AiDoctorApiService,
     public state: AiDoctorStateService,
     private geo: GeolocationService,
-    private country: CountryService
+    private country: CountryService,
+    private pdf: ReportPdfService
   ) {}
 
   get messages(): ChatMessage[] {
@@ -186,7 +196,8 @@ export class TriageShellComponent implements OnInit {
           this.ageSexDone = true;
         }
         if (s.sex === 'male' || s.sex === 'female') this.sex = s.sex;
-        this.scrollSoon();
+        if (this.report) this.scrollReportToTop();
+        else this.scrollSoon();
         done();
       },
       error: () => done(), // stale/missing session -> start fresh
@@ -343,7 +354,9 @@ export class TriageShellComponent implements OnInit {
       next: (res) => {
         this.loading = false;
         this.handleResponse(res);
-        this.scrollSoon();
+        // Report lands -> scroll to its top; any other reply -> follow to bottom.
+        if (res.type === 'report' && res.report) this.scrollReportToTop();
+        else this.scrollSoon();
       },
       error: () => {
         this.loading = false;
@@ -371,11 +384,14 @@ export class TriageShellComponent implements OnInit {
         }
         this.progress = 100;
         this.stepsLeft = 0;
+        this.reportPending = false;
         break;
       case 'question': {
         say(res.message || res.question);
         if (res.progress != null) this.progress = res.progress;
         if (res.stepsLeft != null) this.stepsLeft = res.stepsLeft;
+        // No questions left -> the next answer triggers report generation.
+        this.reportPending = this.stepsLeft <= 0;
         break;
       }
       case 'find_doctor':
@@ -400,6 +416,11 @@ export class TriageShellComponent implements OnInit {
     this.runPdf();
   }
 
+  downloadSoapPdf(): void {
+    if (!this.state.isLoggedIn) return this.openAuth('soap');
+    this.runSoapPdf();
+  }
+
   connectDoctor(): void {
     if (!this.state.isLoggedIn) return this.openAuth('doctors');
     this.openLocationPrompt();
@@ -419,7 +440,7 @@ export class TriageShellComponent implements OnInit {
     }
   }
 
-  private openAuth(action: 'pdf' | 'doctors' | null): void {
+  private openAuth(action: 'pdf' | 'soap' | 'doctors' | null): void {
     this.pendingAction = action;
     this.showAuth = true;
   }
@@ -492,6 +513,7 @@ export class TriageShellComponent implements OnInit {
     const action = this.pendingAction;
     this.pendingAction = null;
     if (action === 'pdf') this.runPdf();
+    if (action === 'soap') this.runSoapPdf();
     if (action === 'doctors') this.openLocationPrompt();
   }
 
@@ -513,6 +535,8 @@ export class TriageShellComponent implements OnInit {
     this.report = null;
     this.state.report = null;
     this.doctors = [];
+    this.affiliateDoctors = [];
+    this.affiliateOffer = null;
     this.askCity = false;
     this.emergency = false;
     this.ageSexDone = false;
@@ -520,25 +544,30 @@ export class TriageShellComponent implements OnInit {
     this.sex = '';
     this.consultFor = null;
     this.editingDetails = false;
+    this.reportPending = false;
     this.rehydrate(() => this.scrollSoon());
   }
 
+  // PDFs are built on the client from the report object, so the download works
+  // without depending on a server PDF endpoint.
   private runPdf(): void {
-    const sid = this.state.sessionId;
-    if (!sid) return;
-    this.api.downloadReportPdf(sid).subscribe({
-      next: (blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `health-report-${sid}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        window.URL.revokeObjectURL(url);
-      },
-      error: () => alert('Could not download the report.'),
-    });
+    if (!this.report) return;
+    const sid = this.state.sessionId || 'summary';
+    try {
+      this.pdf.downloadReport(this.report, this.appName, `health-report-${sid}.pdf`);
+    } catch {
+      alert('Could not generate the report. Please try again.');
+    }
+  }
+
+  private runSoapPdf(): void {
+    if (!this.report) return;
+    const sid = this.state.sessionId || 'summary';
+    try {
+      this.pdf.downloadSoap(this.report, this.appName, `soap-note-${sid}.pdf`);
+    } catch {
+      alert('Could not generate the SOAP note. Please try again.');
+    }
   }
 
   // ---- Doctor location flow (honors typed locality; geo is optional) ----
@@ -582,7 +611,9 @@ export class TriageShellComponent implements OnInit {
       next: (res) => {
         this.doctorsLoading = false;
         this.doctors = res.doctors || [];
-        if (this.doctors.length === 0) {
+        this.affiliateDoctors = res.affiliateDoctors || [];
+        this.affiliateOffer = res.affiliateOffer || null;
+        if (this.doctors.length === 0 && this.affiliateDoctors.length === 0) {
           this.state.addMessage({
             role: 'assistant',
             text: res.error || 'I could not find doctors there. Try another area.',
@@ -654,6 +685,8 @@ export class TriageShellComponent implements OnInit {
     this.emergency = false;
     this.report = null;
     this.doctors = [];
+    this.affiliateDoctors = [];
+    this.affiliateOffer = null;
     this.askCity = false;
     this.ageSexDone = false;
     this.age = null;
@@ -667,6 +700,7 @@ export class TriageShellComponent implements OnInit {
     this.showDrawer = false;
     this.progress = 0;
     this.stepsLeft = 0;
+    this.reportPending = false;
     // Fresh start in place (no new session yet — created on the first message).
     this.state.addMessage({
       role: 'assistant',
@@ -679,6 +713,32 @@ export class TriageShellComponent implements OnInit {
     setTimeout(
       () => this.scrollAnchor?.nativeElement?.scrollIntoView({ behavior: 'smooth' }),
       60
+    );
+  }
+
+  // When the report lands we want the user to read it from the top — not get
+  // dumped at the bottom of the page like a normal chat reply.
+  private scrollReportToTop(): void {
+    setTimeout(
+      () =>
+        this.reportTop?.nativeElement?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        }),
+      80
+    );
+  }
+
+  // True only while the final report is actually being generated — i.e. the
+  // backend has signalled no questions remain (stepsLeft === 0) and we're
+  // waiting on that in-flight request. Using stepsLeft (not a loose progress
+  // threshold) stops the overlay flashing while the AI is still asking things.
+  get generatingReport(): boolean {
+    return (
+      this.loading &&
+      !this.report &&
+      !this.emergency &&
+      this.reportPending
     );
   }
 }

@@ -7,6 +7,7 @@ module.exports = {
         heading: ["Outfit", "sans-serif"],
         body: ["DM Sans", "sans-serif"],
         display: ["Fraunces", "Georgia", "serif"], // serif hero (Doctronic-style)
+        grotesk: ["Space Grotesk", "sans-serif"], // bold display for the consoles
       },
       colors: {
         teal: {
@@ -21,6 +22,24 @@ module.exports = {
           900: "#0A332F",
         },
         cream: "#FAFAF2", // landing background (matches screenshot)
+        // Console theme (partner + admin): warm cream + fresh grass green.
+        grass: {
+          50: "#F0FAF3",
+          100: "#DCF3E3",
+          200: "#B6E7C6",
+          300: "#86D6A3",
+          400: "#4FBE7C",
+          500: "#1C9E5B",
+          600: "#178049",
+          700: "#136A3D",
+          800: "#0F5331",
+          900: "#0A3A22",
+        },
+        sand: {
+          50: "#FAF9F2", // warm page background
+          100: "#F4F2E8",
+          200: "#EAE7D8", // warm borders
+        },
       },
       animation: {
         "fade-up": "fadeUp 0.6s ease-in-out",

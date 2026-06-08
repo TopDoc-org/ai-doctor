@@ -1,6 +1,6 @@
 {
-  "name": "HealthGuide AI by KnocDoc",
-  "short_name": "HealthGuide AI",
+  "name": "DoctoGuide by KnocDoc",
+  "short_name": "DoctoGuide",
   "description": "Free AI doctor & symptom checker for India. Instant AI health guidance, the right specialist to see, and trusted doctors near you.",
   "start_url": "/",
   "scope": "/",

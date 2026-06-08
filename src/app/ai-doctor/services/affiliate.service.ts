@@ -1,0 +1,95 @@
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
+
+const LS_REF = 'aiDoctorRef';
+const TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+interface StoredRef {
+  clinicId: string;
+  utm?: Record<string, string>;
+  ts: number; // capture time (epoch ms)
+}
+
+// Campaign attribution. A partner clinic drives ad traffic to
+// `/triage?ref=<clinicId>` (optionally with utm_* params). We capture the ref
+// on landing, persist it (with a TTL) so it survives internal navigation and
+// reloads, and record one click per page-load that actually carries a ref.
+// The stored clinicId is later attached to the session, the captured lead, and
+// the doctor search so the backend can attribute conversions to the clinic.
+@Injectable({ providedIn: 'root' })
+export class AffiliateService {
+  private partnerBase = `${environment.serverUrl}${(environment as any).partnerBase}`;
+  // Guard so multiple NavigationEnd events in one page-load don't double-count.
+  private recordedThisLoad = false;
+
+  constructor(private http: HttpClient) {}
+
+  // Parse `ref` (+ utm_*) from a query string and, if present, persist it and
+  // record a click. Safe to call on every NavigationEnd — only a URL that
+  // actually carries `ref` triggers storage/click recording.
+  capture(search: string = window.location.search): void {
+    const params = new URLSearchParams(search || '');
+    const ref = (params.get('ref') || '').trim();
+    if (!ref) return;
+
+    const utm: Record<string, string> = {};
+    params.forEach((v, k) => {
+      if (k.toLowerCase().startsWith('utm_')) utm[k] = v;
+    });
+
+    const stored: StoredRef = { clinicId: ref, utm, ts: Date.now() };
+    try {
+      localStorage.setItem(LS_REF, JSON.stringify(stored));
+    } catch {
+      /* private mode / quota — ignore */
+    }
+
+    if (!this.recordedThisLoad) {
+      this.recordedThisLoad = true;
+      this.recordClick(ref, utm);
+    }
+  }
+
+  // Active clinicId if a non-expired ref is stored, else null.
+  get clinicId(): string | null {
+    const raw = this.readStored();
+    return raw ? raw.clinicId : null;
+  }
+
+  get utm(): Record<string, string> | undefined {
+    return this.readStored()?.utm;
+  }
+
+  // The digital-campaign tag (utm_campaign) from the stored ref link, if any.
+  // Lets the funnel attribute each lead to the campaign that produced it.
+  get campaign(): string | null {
+    return this.utm?.['utm_campaign'] || null;
+  }
+
+  private readStored(): StoredRef | null {
+    try {
+      const raw = localStorage.getItem(LS_REF);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as StoredRef;
+      if (!parsed?.clinicId || Date.now() - (parsed.ts || 0) > TTL_MS) {
+        localStorage.removeItem(LS_REF);
+        return null;
+      }
+      return parsed;
+    } catch {
+      return null;
+    }
+  }
+
+  // Fire-and-forget. A failed click record must never block the funnel.
+  private recordClick(clinicId: string, utm?: Record<string, string>): void {
+    this.http
+      .post(`${this.partnerBase}/click`, {
+        clinicId,
+        sessionId: localStorage.getItem('aiDoctorSessionId') || undefined,
+        utm: utm && Object.keys(utm).length ? utm : undefined,
+      })
+      .subscribe({ next: () => {}, error: () => {} });
+  }
+}

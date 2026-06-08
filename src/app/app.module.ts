@@ -1,8 +1,9 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { HttpClientModule } from '@angular/common/http';
+import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
+import { SessionExpiryInterceptor } from './shared/session-expiry.interceptor';
 
 import { CarouselModule } from 'primeng/carousel';
 
@@ -33,7 +34,9 @@ import { TypingAnimationComponent } from './shared/typing-animation/typing-anima
     AppRoutingModule,
     CarouselModule,
   ],
-  providers: [],
+  providers: [
+    { provide: HTTP_INTERCEPTORS, useClass: SessionExpiryInterceptor, multi: true },
+  ],
   bootstrap: [AppComponent],
 })
 export class AppModule {}

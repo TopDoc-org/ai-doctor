@@ -43,6 +43,13 @@ export interface Report {
   generatedAt?: string;
 }
 
+// A discount/offer a partner clinic configured for the funnel.
+export interface PartnerOffer {
+  title: string;
+  description?: string;
+  discountText?: string; // e.g. "20% off first consult"
+}
+
 export interface Doctor {
   name: string;
   rating?: number | null;
@@ -55,6 +62,13 @@ export interface Doctor {
   openNow?: boolean | null;
   placeId?: string;
   mapsUrl?: string;
+  // Affiliate (partner clinic) fields — present only on partner matches.
+  isPartner?: boolean;
+  clinicId?: string;
+  clinicName?: string;
+  specialty?: string;
+  bookingUrl?: string;
+  offer?: PartnerOffer;
 }
 
 // Backend /message response (discriminated by `type`).
@@ -85,6 +99,8 @@ export interface MessageResponse {
 
 export interface DoctorsResponse {
   doctors: Doctor[];
+  affiliateDoctors?: Doctor[]; // prioritized partner-clinic matches
+  affiliateOffer?: PartnerOffer; // clinic-wide offer banner
   needsLocation?: boolean;
   cached?: boolean;
   specialty?: string;

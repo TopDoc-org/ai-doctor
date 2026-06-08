@@ -11,9 +11,9 @@ const routes: Routes = [
     component: LandingComponent,
     data: {
       seo: {
-        title: 'AI Doctor & Free Symptom Checker %COUNTRY% | HealthGuide AI by KnocDoc',
+        title: 'AI Doctor & Free Symptom Checker %COUNTRY% | DoctoGuide by KnocDoc',
         description:
-          'Free AI doctor & symptom checker for %COUNTRY%. Describe your symptoms, get instant AI health guidance, learn which specialist to see, and find trusted doctors near you. No sign-up. HealthGuide AI by KnocDoc.',
+          'Free AI doctor & symptom checker for %COUNTRY%. Describe your symptoms, get instant AI health guidance, learn which specialist to see, and find trusted doctors near you. No sign-up. DoctoGuide by KnocDoc.',
         keywords:
           'AI doctor %COUNTRY%, AI symptom checker, AI health assistant, AI diagnosis, AI health report, free online doctor %COUNTRY%, find doctor near me, AI health agent',
       },
@@ -24,9 +24,9 @@ const routes: Routes = [
     component: PrivacyComponent,
     data: {
       seo: {
-        title: 'Privacy Policy | HealthGuide AI by KnocDoc',
+        title: 'Privacy Policy | DoctoGuide by KnocDoc',
         description:
-          'How HealthGuide AI by KnocDoc collects, uses, and protects your health information. Privacy-first AI health assistant for %COUNTRY%.',
+          'How DoctoGuide by KnocDoc collects, uses, and protects your health information. Privacy-first AI health assistant for %COUNTRY%.',
       },
     },
   },
@@ -35,9 +35,9 @@ const routes: Routes = [
     component: TermsComponent,
     data: {
       seo: {
-        title: 'Terms of Use | HealthGuide AI by KnocDoc',
+        title: 'Terms of Use | DoctoGuide by KnocDoc',
         description:
-          'Terms of use for HealthGuide AI by KnocDoc, the free AI health-information assistant and symptom checker for %COUNTRY%.',
+          'Terms of use for DoctoGuide by KnocDoc, the free AI health-information assistant and symptom checker for %COUNTRY%.',
       },
     },
   },
@@ -46,9 +46,9 @@ const routes: Routes = [
     component: DisclaimerComponent,
     data: {
       seo: {
-        title: 'Medical Disclaimer | HealthGuide AI by KnocDoc',
+        title: 'Medical Disclaimer | DoctoGuide by KnocDoc',
         description:
-          'HealthGuide AI is an AI health-information assistant, not a licensed physician. Read the medical disclaimer. In an emergency in %COUNTRY% call 112 or 108.',
+          'DoctoGuide is an AI health-information assistant, not a licensed physician. Read the medical disclaimer. In an emergency in %COUNTRY% call 112 or 108.',
       },
     },
   },
@@ -57,6 +57,27 @@ const routes: Routes = [
     loadChildren: () =>
       import('./ai-doctor/ai-doctor.module').then((m) => m.AiDoctorModule),
     // Auth-gated app — keep out of the search index.
+    data: { seo: { robots: 'noindex,nofollow' } },
+  },
+  {
+    path: 'partner',
+    loadChildren: () =>
+      import('./partner/partner.module').then((m) => m.PartnerModule),
+    // Clinic-admin dashboard — keep out of the search index.
+    data: { seo: { robots: 'noindex,nofollow' } },
+  },
+  {
+    path: 'admin',
+    loadChildren: () =>
+      import('./admin/admin.module').then((m) => m.AdminModule),
+    // Global super-admin console — keep out of the search index.
+    data: { seo: { robots: 'noindex,nofollow' } },
+  },
+  {
+    path: 'owner',
+    loadChildren: () =>
+      import('./owner/owner.module').then((m) => m.OwnerModule),
+    // Creator (platform-owner) console — keep out of the search index.
     data: { seo: { robots: 'noindex,nofollow' } },
   },
   { path: '**', redirectTo: '' },
