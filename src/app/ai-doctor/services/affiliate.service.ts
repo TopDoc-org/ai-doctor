@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Inject, Injectable, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 
@@ -23,13 +24,20 @@ export class AffiliateService {
   // Guard so multiple NavigationEnd events in one page-load don't double-count.
   private recordedThisLoad = false;
 
-  constructor(private http: HttpClient) {}
+  private readonly isBrowser: boolean;
+
+  constructor(private http: HttpClient, @Inject(PLATFORM_ID) platformId: Object) {
+    this.isBrowser = isPlatformBrowser(platformId);
+  }
 
   // Parse `ref` (+ utm_*) from a query string and, if present, persist it and
   // record a click. Safe to call on every NavigationEnd — only a URL that
   // actually carries `ref` triggers storage/click recording.
-  capture(search: string = window.location.search): void {
-    const params = new URLSearchParams(search || '');
+  // No-op during prerender: `window`/`localStorage` don't exist on the server,
+  // and attribution only makes sense for a real visitor.
+  capture(search?: string): void {
+    if (!this.isBrowser) return;
+    const params = new URLSearchParams(search ?? window.location.search ?? '');
     const ref = (params.get('ref') || '').trim();
     if (!ref) return;
 
@@ -68,6 +76,7 @@ export class AffiliateService {
   }
 
   private readStored(): StoredRef | null {
+    if (!this.isBrowser) return null;
     try {
       const raw = localStorage.getItem(LS_REF);
       if (!raw) return null;

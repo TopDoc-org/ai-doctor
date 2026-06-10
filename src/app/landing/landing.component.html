@@ -51,7 +51,7 @@
         [numVisible]="1"
         [numScroll]="1"
         [circular]="true"
-        [autoplayInterval]="6500"
+        [autoplayInterval]="isBrowser ? 6500 : 0"
         [showNavigators]="false"
         [showIndicators]="true"
       >

@@ -68,7 +68,7 @@ export class AuthGateComponent implements OnInit {
     if (this.authStep === 'details') return 'A few details';
     if (this.authStep === 'register')
       return this.registerPinStep === 'create' ? 'Create your PIN' : 'Confirm your PIN';
-    return 'Just One SStep';
+    return 'Just One Step';
   }
 
   get displayName(): string {

@@ -8,27 +8,27 @@ export const SITE_URL = 'https://www.knocdoc.in';
 
 /**
  * Placeholder for the user's country in SEO strings (route `data.seo` + DEFAULTS).
- * Resolved at runtime to the detected country, or the launch market when unknown —
- * meta needs a real place name, so the SEO fallback differs from the neutral UI copy.
+ * Resolved at runtime to the detected country. When the country is unknown (during
+ * prerender, or before IP detection resolves) the token is dropped gracefully, so
+ * use it only in suffix positions like " in %COUNTRY%" / " for %COUNTRY%" — never
+ * mid-sentence where its removal would leave a grammar hole.
  */
 export const COUNTRY_TOKEN = '%COUNTRY%';
-const SEO_COUNTRY_FALLBACK = 'India';
 
 /** Per-route SEO metadata, attached via route `data: { seo: {...} }`. */
 export interface SeoData {
   title?: string;
   description?: string;
-  keywords?: string;
   /** Robots directive, e.g. 'index,follow' or 'noindex,nofollow'. */
   robots?: string;
   /** Absolute OG image URL. Falls back to the default social card. */
   image?: string;
 }
 
-const DEFAULTS: Required<Pick<SeoData, 'title' | 'description' | 'robots' | 'image'>> = {
-  title: `AI Doctor & Free Symptom Checker ${COUNTRY_TOKEN} | DoctoGuide by KnocDoc`,
+const DEFAULTS: Required<SeoData> = {
+  title: `AI Doctor & Free Symptom Checker in ${COUNTRY_TOKEN} | DoctoGuide by KnocDoc`,
   description:
-    `Free AI doctor & symptom checker for ${COUNTRY_TOKEN}. Describe your symptoms, get instant AI health guidance, learn which specialist to see, and find trusted doctors near you. No sign-up. DoctoGuide by KnocDoc.`,
+    `Free AI doctor & symptom checker. Describe your symptoms, get instant AI health guidance, learn which specialist to see, and find trusted doctors near you in ${COUNTRY_TOKEN}. No sign-up. DoctoGuide by KnocDoc.`,
   robots: 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1',
   image: `${SITE_URL}/assets/og-image.png`,
 };
@@ -58,10 +58,20 @@ export class SeoService {
     });
   }
 
-  /** Swap the country placeholder for the detected country (or launch-market fallback). */
+  /**
+   * Swap the country placeholder for the detected country. When unknown (prerender,
+   * or before IP detection resolves) collapse the token and its " in " / " for "
+   * preposition so the sentence stays world-neutral and grammatical.
+   */
   private withCountry(s: string | undefined): string | undefined {
     if (!s) return s;
-    return s.split(COUNTRY_TOKEN).join(this.country.countryName || SEO_COUNTRY_FALLBACK);
+    const name = this.country.countryName;
+    if (name) return s.split(COUNTRY_TOKEN).join(name);
+    return s
+      .replace(/\s*(in|for)\s+%COUNTRY%/gi, '')
+      .split(COUNTRY_TOKEN).join('')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
   }
 
   /**
@@ -77,17 +87,16 @@ export class SeoService {
       ...merged,
       title: this.withCountry(merged.title)!,
       description: this.withCountry(merged.description)!,
-      keywords: this.withCountry(merged.keywords),
     };
     const canonical = `${SITE_URL}${urlPath === '/' ? '/' : urlPath.replace(/\/$/, '')}`;
 
     this.title.setTitle(seo.title);
     this.meta.updateTag({ name: 'description', content: seo.description });
     this.meta.updateTag({ name: 'robots', content: seo.robots });
-    if (seo.keywords) {
-      this.meta.updateTag({ name: 'keywords', content: seo.keywords });
-    }
 
+    // No hreflang tags by design: one URL set, one language, runtime country
+    // personalization — there are no language/region URL alternates to declare.
+    // Revisit only if country-specific URLs (e.g. /in/...) ever ship.
     this.setCanonical(canonical);
 
     // Open Graph
@@ -127,5 +136,10 @@ export class SeoService {
       this.doc.head.appendChild(script);
     }
     script.text = JSON.stringify(schema);
+  }
+
+  /** Remove a JSON-LD block added via setJsonLd (call from ngOnDestroy of the owning page). */
+  removeJsonLd(id: string): void {
+    this.doc.getElementById(`ld-${id}`)?.remove();
   }
 }

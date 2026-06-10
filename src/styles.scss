@@ -3,8 +3,8 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Fonts: Outfit (headings), DM Sans (body), Fraunces (serif hero), Space Grotesk (console display) */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400;1,9..144,600&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+/* Fonts: Outfit (headings), DM Sans (body), Fraunces (serif hero), Space Grotesk (console display).
+   Loaded via <link> in index.html with preconnect — avoids the render-blocking CSS @import chain. */
 
 :root {
   --font-heading: 'Outfit', sans-serif;
@@ -35,6 +35,5 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Material Icons (used for glyphs) */
-@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+/* Material Icons (loaded via <link> in index.html) */
 .material-icons { vertical-align: middle; }
