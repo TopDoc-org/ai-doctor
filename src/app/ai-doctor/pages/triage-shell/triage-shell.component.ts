@@ -36,7 +36,11 @@ export class TriageShellComponent implements OnInit {
   reportPending = false;
 
   report: Report | null = null;
-  reportOpen = { causes: true, soap: true };
+  reportOpen = { causes: true, soap: true, confidence: false };
+
+  // Post-report amend: user opted to add/correct details in the same chat; the
+  // composer re-opens and the backend regenerates the report when done.
+  amending = false;
 
   // consent gate (before first AI reply)
   showConsent = false;
@@ -90,9 +94,10 @@ export class TriageShellComponent implements OnInit {
   }
 
   // Report is the funnel's end artifact: lock free-text chat once it's ready
-  // (user can still find a doctor / start a new chat).
+  // (user can still find a doctor / start a new chat) — unless the user opted
+  // to amend, which re-opens the composer until the updated report lands.
   get consultComplete(): boolean {
-    return !!this.report && !this.emergency;
+    return !!this.report && !this.emergency && !this.amending;
   }
 
   // Quick age/sex input is a shortcut for the FIRST triage question only.
@@ -188,6 +193,8 @@ export class TriageShellComponent implements OnInit {
           this.report = s.report;
           this.state.report = s.report;
         }
+        // Resume an interrupted amend round (composer stays open).
+        this.amending = s.triageState?.phase === 'amending';
         this.emergency = !!s.emergency;
         if (s.suggestedSpecialty) this.state.suggestedSpecialty = s.suggestedSpecialty;
         if (s.hasLead) this.state.leadCaptured = true;
@@ -347,10 +354,23 @@ export class TriageShellComponent implements OnInit {
     this.ensureSession(() => this.dispatchToSession(text));
   }
 
+  // Re-open the chat after the report so the user can add or correct details;
+  // the backend re-runs the interview on the new info and regenerates the report.
+  startAmend(): void {
+    if (!this.report || this.emergency) return;
+    this.amending = true;
+    this.state.addMessage({
+      role: 'assistant',
+      text: "Sure — tell me what you'd like to add or correct, and I'll update your report.",
+    });
+    this.scrollSoon();
+    setTimeout(() => this.composer?.nativeElement?.focus(), 100);
+  }
+
   private dispatchToSession(text: string): void {
     const sid = this.state.sessionId!;
     this.loading = true;
-    this.api.sendMessage(sid, text).subscribe({
+    this.api.sendMessage(sid, text, { amend: this.amending }).subscribe({
       next: (res) => {
         this.loading = false;
         this.handleResponse(res);
@@ -382,16 +402,24 @@ export class TriageShellComponent implements OnInit {
           this.report = res.report;
           this.state.report = res.report;
         }
+        if (this.amending) {
+          this.amending = false;
+          say("I've updated your report with the new details.");
+        }
         this.progress = 100;
         this.stepsLeft = 0;
         this.reportPending = false;
         break;
       case 'question': {
         say(res.message || res.question);
-        if (res.progress != null) this.progress = res.progress;
-        if (res.stepsLeft != null) this.stepsLeft = res.stepsLeft;
-        // No questions left -> the next answer triggers report generation.
-        this.reportPending = this.stepsLeft <= 0;
+        // During an amend round the report already exists — keep the progress
+        // bar at 100 instead of replaying interview progress.
+        if (!this.amending) {
+          if (res.progress != null) this.progress = res.progress;
+          if (res.stepsLeft != null) this.stepsLeft = res.stepsLeft;
+          // No questions left -> the next answer triggers report generation.
+          this.reportPending = this.stepsLeft <= 0;
+        }
         break;
       }
       case 'find_doctor':
@@ -534,6 +562,7 @@ export class TriageShellComponent implements OnInit {
     this.state.setMessages([]);
     this.report = null;
     this.state.report = null;
+    this.amending = false;
     this.doctors = [];
     this.affiliateDoctors = [];
     this.affiliateOffer = null;
@@ -671,6 +700,15 @@ export class TriageShellComponent implements OnInit {
     return colors[h];
   }
 
+  // The specialist recommended by the report, with the right article — used to
+  // personalise the "connect with a doctor" surfaces ("an Orthopedist", "a
+  // Neurologist"). Falls back to the generic wording when no report yet.
+  get specialistLabel(): string {
+    const s = this.report?.suggestedSpecialty || this.state.suggestedSpecialty;
+    if (!s) return 'a licensed doctor';
+    return `${/^[aeiou]/i.test(s) ? 'an' : 'a'} ${s}`;
+  }
+
   // Split a SOAP field into readable bullet lines.
   toBullets(text?: string): string[] {
     if (!text) return [];
@@ -684,6 +722,7 @@ export class TriageShellComponent implements OnInit {
     this.state.reset();
     this.emergency = false;
     this.report = null;
+    this.amending = false;
     this.doctors = [];
     this.affiliateDoctors = [];
     this.affiliateOffer = null;

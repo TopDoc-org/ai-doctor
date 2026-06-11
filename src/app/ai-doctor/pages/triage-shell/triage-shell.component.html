@@ -209,7 +209,8 @@
       </div>
 
       <!-- report card -->
-      <div #reportTop *ngIf="report" class="scroll-mt-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5 animate-fade-up">
+      <!-- hidden while amending: the old report disappears until the updated one lands -->
+      <div #reportTop *ngIf="report && !amending" class="scroll-mt-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5 animate-fade-up">
         <!-- header -->
         <div class="flex items-start justify-between">
           <div>
@@ -226,15 +227,18 @@
 
         <!-- continue to a licensed doctor -->
         <div class="mt-4 rounded-xl bg-teal-50 p-4">
-          <p class="font-heading font-semibold text-teal-900">Continue to a licensed doctor</p>
+          <p class="font-heading font-semibold text-teal-900">Continue with {{ specialistLabel }}</p>
+          <p *ngIf="report.suggestedSpecialty" class="mt-0.5 text-xs text-teal-900/60">
+            Recommended specialist for your symptoms: <span class="font-semibold text-teal-700">{{ report.suggestedSpecialty }}</span>
+          </p>
           <ul class="mt-2 space-y-1.5">
-            <li *ngFor="let b of ['Find doctors near you','A doctor reviews your concerns and next steps','Get a referral or tests advised, if needed','Your summary is ready to share with any doctor']"
+            <li *ngFor="let b of ['Find ' + specialistLabel + ' near you','A doctor reviews your concerns and next steps','Get a referral or tests advised, if needed','Your summary is ready to share with any doctor']"
               class="flex items-start gap-2 text-sm text-teal-900/80">
               <span class="material-icons text-teal-600" style="font-size:16px">check_circle</span>{{ b }}
             </li>
           </ul>
           <button (click)="connectDoctor()" class="mt-3 w-full rounded-xl bg-teal-600 px-4 py-3 text-sm font-semibold text-white hover:bg-teal-700">
-            Connect with a doctor →
+            Connect with {{ specialistLabel }} →
           </button>
         </div>
 
@@ -320,6 +324,47 @@
             </ul>
           </div>
         </div>
+
+        <!-- AI confidence accordion (collapsed by default; absent on older reports) -->
+        <ng-container *ngIf="report.confidence as conf">
+          <button (click)="reportOpen.confidence = !reportOpen.confidence" class="mt-3 flex w-full items-center justify-between border-t border-black/5 pt-3 text-left">
+            <span class="font-heading font-semibold text-teal-900">AI confidence</span>
+            <span class="flex items-center gap-2">
+              <span class="rounded-full px-2.5 py-0.5 text-xs font-bold"
+                    [ngClass]="{
+                      'bg-red-100 text-red-700': conf.level === 'low',
+                      'bg-amber-100 text-amber-700': conf.level === 'moderate',
+                      'bg-teal-100 text-teal-700': conf.level === 'high'
+                    }">{{ conf.score }}/100 · {{ conf.level }}</span>
+              <span class="material-icons text-teal-600">{{ reportOpen.confidence ? 'expand_less' : 'expand_more' }}</span>
+            </span>
+          </button>
+          <div *ngIf="reportOpen.confidence" class="mt-2">
+            <div class="h-1.5 w-full overflow-hidden rounded-full bg-black/5">
+              <div class="h-full rounded-full"
+                   [ngClass]="{
+                     'bg-red-400': conf.level === 'low',
+                     'bg-amber-400': conf.level === 'moderate',
+                     'bg-teal-500': conf.level === 'high'
+                   }"
+                   [style.width.%]="conf.score"></div>
+            </div>
+            <ul *ngIf="conf.factors?.length" class="mt-2 space-y-0.5">
+              <li *ngFor="let f of conf.factors" class="flex items-start gap-2 text-sm text-teal-900/80">
+                <span class="text-teal-600">•</span>{{ f }}
+              </li>
+            </ul>
+            <div *ngIf="conf.missing?.length" class="mt-2">
+              <p class="text-xs font-semibold uppercase tracking-wide text-teal-900/50">What could change this assessment</p>
+              <ul class="mt-1 space-y-0.5">
+                <li *ngFor="let m of conf.missing" class="flex items-start gap-2 text-sm text-teal-900/80">
+                  <span class="text-teal-600">•</span>{{ m }}
+                </li>
+              </ul>
+            </div>
+            <p class="mt-2 text-xs text-teal-900/50">This reflects the AI's own estimate of how well the interview supports this summary — not diagnostic certainty.</p>
+          </div>
+        </ng-container>
 
         <!-- suggested specialist + downloads -->
         <div class="mt-4 rounded-lg bg-teal-900 px-4 py-3 text-white">
@@ -528,12 +573,16 @@
   <footer *ngIf="consultComplete" class="border-t border-black/5 bg-white px-3 py-3 sm:px-4" style="padding-bottom: max(0.75rem, env(safe-area-inset-bottom));">
     <div class="mx-auto max-w-2xl">
       <p class="text-center text-[13px] font-medium text-teal-900 sm:text-sm">
-        Your report is ready. Continue with a licensed doctor.
+        Your report is ready. Continue with {{ specialistLabel }}.
       </p>
       <div class="mt-2.5 flex flex-col gap-2 sm:flex-row">
         <button (click)="connectDoctor()"
           class="flex w-full items-center justify-center gap-1.5 whitespace-nowrap rounded-xl bg-teal-600 px-4 py-3 text-sm font-semibold text-white hover:bg-teal-700 sm:flex-1">
-          <span class="material-icons" style="font-size:18px">medical_services</span> Connect with a doctor
+          <span class="material-icons" style="font-size:18px">medical_services</span> Connect with {{ specialistLabel }}
+        </button>
+        <button (click)="startAmend()"
+          class="flex w-full items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-teal-600 px-4 py-3 text-sm font-semibold text-teal-700 hover:bg-teal-50 sm:w-auto">
+          <span class="material-icons" style="font-size:18px">edit_note</span> Add or correct details
         </button>
         <button (click)="restart()"
           class="flex w-full items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-teal-600 px-4 py-3 text-sm font-semibold text-teal-700 hover:bg-teal-50 sm:w-auto">

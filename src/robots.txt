@@ -1,5 +1,8 @@
 User-agent: *
 Allow: /
 Disallow: /triage
+Disallow: /partner
+Disallow: /admin
+Disallow: /owner
 
 Sitemap: https://www.knocdoc.in/sitemap.xml

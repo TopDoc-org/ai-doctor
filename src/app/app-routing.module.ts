@@ -4,6 +4,11 @@ import { LandingComponent } from './landing/landing.component';
 import { PrivacyComponent } from './legal/privacy.component';
 import { TermsComponent } from './legal/terms.component';
 import { DisclaimerComponent } from './legal/disclaimer.component';
+import { AiDoctorPageComponent } from './seo-pages/ai-doctor-page.component';
+import { SymptomCheckerPageComponent } from './seo-pages/symptom-checker-page.component';
+import { WhichSpecialistPageComponent } from './seo-pages/which-specialist-page.component';
+import { HealthGuidePageComponent } from './seo-pages/health-guide-page.component';
+import { EmergencyNumbersPageComponent } from './seo-pages/emergency-numbers-page.component';
 
 const routes: Routes = [
   {
@@ -11,11 +16,10 @@ const routes: Routes = [
     component: LandingComponent,
     data: {
       seo: {
-        title: 'AI Doctor & Free Symptom Checker %COUNTRY% | DoctoGuide by KnocDoc',
+        // %COUNTRY% only in suffix positions — it collapses cleanly when unknown.
+        title: 'AI Doctor & Free Symptom Checker in %COUNTRY% | DoctoGuide by KnocDoc',
         description:
-          'Free AI doctor & symptom checker for %COUNTRY%. Describe your symptoms, get instant AI health guidance, learn which specialist to see, and find trusted doctors near you. No sign-up. DoctoGuide by KnocDoc.',
-        keywords:
-          'AI doctor %COUNTRY%, AI symptom checker, AI health assistant, AI diagnosis, AI health report, free online doctor %COUNTRY%, find doctor near me, AI health agent',
+          'Free AI doctor & symptom checker. Describe your symptoms, get instant AI health guidance, learn which specialist to see, and find trusted doctors near you in %COUNTRY%. No sign-up. DoctoGuide by KnocDoc.',
       },
     },
   },
@@ -26,7 +30,7 @@ const routes: Routes = [
       seo: {
         title: 'Privacy Policy | DoctoGuide by KnocDoc',
         description:
-          'How DoctoGuide by KnocDoc collects, uses, and protects your health information. Privacy-first AI health assistant for %COUNTRY%.',
+          'How DoctoGuide by KnocDoc collects, uses, and protects your health information. Privacy-first AI health assistant.',
       },
     },
   },
@@ -37,7 +41,7 @@ const routes: Routes = [
       seo: {
         title: 'Terms of Use | DoctoGuide by KnocDoc',
         description:
-          'Terms of use for DoctoGuide by KnocDoc, the free AI health-information assistant and symptom checker for %COUNTRY%.',
+          'Terms of use for DoctoGuide by KnocDoc, the free AI health-information assistant and symptom checker.',
       },
     },
   },
@@ -48,7 +52,62 @@ const routes: Routes = [
       seo: {
         title: 'Medical Disclaimer | DoctoGuide by KnocDoc',
         description:
-          'DoctoGuide is an AI health-information assistant, not a licensed physician. Read the medical disclaimer. In an emergency in %COUNTRY% call 112 or 108.',
+          'DoctoGuide is an AI health-information assistant, not a licensed physician. Read the medical disclaimer. In an emergency, call your local emergency number.',
+      },
+    },
+  },
+  {
+    path: 'ai-doctor',
+    component: AiDoctorPageComponent,
+    data: {
+      seo: {
+        title: 'Free AI Doctor Online — Ask Health Questions Instantly | DoctoGuide',
+        description:
+          'Talk to a free AI doctor online. Describe your symptoms, get instant health guidance, and learn which specialist to see. No sign-up, no card. DoctoGuide by KnocDoc.',
+      },
+    },
+  },
+  {
+    path: 'symptom-checker',
+    component: SymptomCheckerPageComponent,
+    data: {
+      seo: {
+        title: 'Free AI Symptom Checker — Describe Symptoms, Get Guidance | DoctoGuide',
+        description:
+          'Free AI symptom checker. Describe your symptoms in plain language and get instant guidance on what could be going on, how urgent it is, and which specialist to see.',
+      },
+    },
+  },
+  {
+    path: 'which-specialist-to-see',
+    component: WhichSpecialistPageComponent,
+    data: {
+      seo: {
+        title: 'Which Specialist Should I See? Find the Right Doctor | DoctoGuide',
+        description:
+          'Not sure which doctor to see? Match your symptoms to the right specialist with our free guide and AI assistant — avoid wasted consultations. DoctoGuide by KnocDoc.',
+      },
+    },
+  },
+  {
+    path: 'health-guide',
+    component: HealthGuidePageComponent,
+    data: {
+      seo: {
+        title: 'Free Online Health Guide — Symptoms, Reports & Medicines | DoctoGuide',
+        description:
+          'Your free online health guide. Understand symptoms, decode lab reports, and make sense of medicines in plain language. Better than Googling. DoctoGuide by KnocDoc.',
+      },
+    },
+  },
+  {
+    path: 'emergency-numbers',
+    component: EmergencyNumbersPageComponent,
+    data: {
+      seo: {
+        title: 'Emergency Numbers by Country — Ambulance & Police | DoctoGuide',
+        description:
+          'Official emergency and ambulance phone numbers for over 190 countries, on one free page. Bookmark before you travel. DoctoGuide by KnocDoc.',
       },
     },
   },
@@ -84,7 +143,9 @@ const routes: Routes = [
 ];
 
 @NgModule({
-  imports: [RouterModule.forRoot(routes)],
+  imports: [RouterModule.forRoot(routes, {
+    initialNavigation: 'enabledBlocking'
+})],
   exports: [RouterModule],
 })
 export class AppRoutingModule {}

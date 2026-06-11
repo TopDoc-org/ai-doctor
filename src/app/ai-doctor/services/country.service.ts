@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Inject, Injectable, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
@@ -41,10 +42,18 @@ export class CountryService {
   private map: CountryMap | null = null;
   private ready: Promise<void> | null = null;
 
-  constructor(private http: HttpClient) {}
+  private readonly isBrowser: boolean;
+
+  constructor(private http: HttpClient, @Inject(PLATFORM_ID) platformId: Object) {
+    this.isBrowser = isPlatformBrowser(platformId);
+  }
 
   // Idempotent: safe to call from multiple components; resolves once.
+  // During prerender this resolves immediately with a null (neutral) country —
+  // detecting via IP on the server would bake the BUILD MACHINE's country into
+  // the prerendered HTML of every page.
   init(): Promise<void> {
+    if (!this.isBrowser) return Promise.resolve();
     if (!this.ready) this.ready = this.resolve();
     return this.ready;
   }

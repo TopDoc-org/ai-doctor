@@ -1,7 +1,10 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, Inject, OnDestroy, OnInit, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
 import { environment } from '../../environments/environment';
 import { CountryService } from '../ai-doctor/services/country.service';
+import { AiDoctorStateService } from '../ai-doctor/services/ai-doctor-state.service';
+import { SeoService } from '../core/seo.service';
 
 @Component({
   selector: 'app-landing',
@@ -63,11 +66,28 @@ export class LandingComponent implements OnInit, OnDestroy {
     { icon: 'menu_book', label: 'Educational information' },
   ];
 
-  constructor(private router: Router, private country: CountryService) {}
+  // Static-friendly: this exact value lands in the prerendered HTML, so it must
+  // read sensibly without JS (it swaps to "You are in X" after detection).
+  readonly isBrowser: boolean;
+
+  // Browser-only (state reads localStorage, unavailable during prerender). The
+  // prerendered HTML always shows Log in / Sign up; this swaps them out after
+  // hydration for users who already have a session.
+  isLoggedIn = false;
+
+  constructor(
+    private router: Router,
+    private country: CountryService,
+    private state: AiDoctorStateService,
+    private seo: SeoService,
+    @Inject(PLATFORM_ID) platformId: Object,
+  ) {
+    this.isBrowser = isPlatformBrowser(platformId);
+  }
 
   // Label for the location banner. Avoids an escaped apostrophe in the template.
   get locationLabel(): string {
-    return this.countryName ? `You are in ${this.countryName}` : 'Detecting your location…';
+    return this.countryName ? `You are in ${this.countryName}` : 'Available worldwide';
   }
 
   // Country-aware copy with neutral fallbacks when the country is unknown.
@@ -84,7 +104,18 @@ export class LandingComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.typePlaceholder();
+    // FAQPage schema for the homepage only (mirrors the visible FAQ below).
+    // Kept country-neutral so the prerendered markup is valid worldwide.
+    this.seo.setJsonLd('faq', this.faqSchema());
+
+    if (this.isBrowser) {
+      this.isLoggedIn = this.state.isLoggedIn;
+      // Typewriter is a self-rescheduling macrotask loop — it would keep the app
+      // from ever becoming stable during prerender, so it is browser-only.
+      this.typePlaceholder();
+    } else {
+      this.placeholder = this.useCases[0];
+    }
     // Resolve country context (IP-based, cached) for the location banner.
     this.country.init().then(() => {
       this.countryName = this.country.countryName;
@@ -94,6 +125,56 @@ export class LandingComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     if (this.phTimer) clearTimeout(this.phTimer);
+    this.seo.removeJsonLd('faq');
+  }
+
+  private faqSchema(): object {
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: [
+        {
+          '@type': 'Question',
+          name: 'Is DoctoGuide free?',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: 'Yes. DoctoGuide by KnocDoc is 100% free to start. There is no sign-up and no credit card needed to describe your symptoms and get AI health guidance.',
+          },
+        },
+        {
+          '@type': 'Question',
+          name: 'Is this an AI doctor or real medical advice?',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: 'DoctoGuide is an AI health-information assistant, not a licensed physician. It gives educational information and suggests which specialist to see, but it does not provide a diagnosis, treatment, or prescription. In an emergency, call your local emergency number (for example 911, 112, or 999).',
+          },
+        },
+        {
+          '@type': 'Question',
+          name: 'Which specialist should I see for my symptoms?',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: 'Describe what you are feeling in plain language and DoctoGuide reads your concern and points you to the right speciality, then helps you find trusted doctors near you.',
+          },
+        },
+        {
+          '@type': 'Question',
+          name: 'Do I need to sign up to use the AI symptom checker?',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: 'No. You can use the AI symptom checker instantly with no sign-up. You only create an account if you want to save your health summary or past consultations.',
+          },
+        },
+        {
+          '@type': 'Question',
+          name: 'Can DoctoGuide help me find a doctor near me?',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: 'Yes. After reviewing your symptoms, DoctoGuide can help you find licensed doctors near you by city or location, with ratings, hours, and contact details.',
+          },
+        },
+      ],
+    };
   }
 
   // Typewriter for the input placeholder: type a use-case, pause, erase, next.

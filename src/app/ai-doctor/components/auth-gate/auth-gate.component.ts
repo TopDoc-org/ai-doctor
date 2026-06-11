@@ -16,6 +16,11 @@ export interface AuthSuccess {
 
 // PIN-based account gate. Mirrors PremiumDocSite's auth flow (no OTP):
 // collect mobile -> numCheck -> login (existing) or register (new / upgrade).
+
+// Tag accounts created (or PIN-upgraded) through this app, so the login PIN
+// prompt can tell "your PIN" (set here) apart from "your KnocDoc PIN" (account
+// created in the KnocDoc apps, which share the same user backend).
+const SIGNUP_SOURCE = 'aiDoctor';
 @Component({
   selector: 'app-auth-gate',
   templateUrl: './auth-gate.component.html',
@@ -68,11 +73,16 @@ export class AuthGateComponent implements OnInit {
     if (this.authStep === 'details') return 'A few details';
     if (this.authStep === 'register')
       return this.registerPinStep === 'create' ? 'Create your PIN' : 'Confirm your PIN';
-    return 'Just One SStep';
+    return 'Just One Step';
   }
 
   get displayName(): string {
     return this.existingUser?.name || this.name;
+  }
+
+  // Existing account that wasn't created through this app -> a KnocDoc account.
+  get isKnocDocAccount(): boolean {
+    return !!this.existingUser && this.existingUser.signupSource !== SIGNUP_SOURCE;
   }
 
   close(): void {
@@ -250,6 +260,7 @@ export class AuthGateComponent implements OnInit {
         first_name: firstName,
         last_name: lastName,
         acceptTerms: true,
+        signupSource: SIGNUP_SOURCE,
       };
       this.api.setPin(payload).subscribe({
         next: () => this.submitLoginAfterRegister(),
@@ -276,6 +287,7 @@ export class AuthGateComponent implements OnInit {
         role: 'user',
         userType: 'registered',
         acceptTerms: true,
+        signupSource: SIGNUP_SOURCE,
       };
       this.api.signup(payload).subscribe({
         next: () => this.submitLoginAfterRegister(),

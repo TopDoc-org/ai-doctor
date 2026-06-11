@@ -8,6 +8,7 @@ import { SessionExpiryInterceptor } from './shared/session-expiry.interceptor';
 import { CarouselModule } from 'primeng/carousel';
 
 import { AppRoutingModule } from './app-routing.module';
+import { SeoPagesModule } from './seo-pages/seo-pages.module';
 import { AppComponent } from './app.component';
 import { LandingComponent } from './landing/landing.component';
 import { LegalLayoutComponent } from './legal/legal-layout.component';
@@ -27,11 +28,12 @@ import { TypingAnimationComponent } from './shared/typing-animation/typing-anima
     TypingAnimationComponent,
   ],
   imports: [
-    BrowserModule,
+    BrowserModule.withServerTransition({ appId: 'serverApp' }),
     BrowserAnimationsModule,
     HttpClientModule,
     FormsModule,
     AppRoutingModule,
+    SeoPagesModule,
     CarouselModule,
   ],
   providers: [

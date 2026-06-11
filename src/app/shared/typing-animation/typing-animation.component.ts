@@ -1,11 +1,14 @@
 import {
   Component,
+  Inject,
   Input,
   OnChanges,
   OnDestroy,
   OnInit,
+  PLATFORM_ID,
   SimpleChanges,
 } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 
 // Angular typewriter (equivalent of MagicUI's React <TypingAnimation>).
 // Types each phrase, pauses, deletes, advances; loops by default.
@@ -37,8 +40,20 @@ export class TypingAnimationComponent implements OnInit, OnChanges, OnDestroy {
   display = '';
   private index = 0; // which phrase
   private timer: any = null;
+  private readonly isBrowser: boolean;
+
+  constructor(@Inject(PLATFORM_ID) platformId: Object) {
+    this.isBrowser = isPlatformBrowser(platformId);
+  }
 
   ngOnInit(): void {
+    // The animation is a self-rescheduling macrotask loop — on the server it
+    // would keep the app from stabilizing and hang prerender. Render the first
+    // phrase statically instead.
+    if (!this.isBrowser) {
+      this.display = this.texts[0] || '';
+      return;
+    }
     this.start();
   }
 
