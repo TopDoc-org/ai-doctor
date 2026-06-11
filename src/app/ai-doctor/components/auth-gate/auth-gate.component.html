@@ -86,8 +86,24 @@
       <!-- PIN entry -->
       <ng-container *ngIf="!showReset">
         <p class="mt-1 text-sm text-teal-900/60">
-          Hi <span class="font-semibold text-teal-900">{{ displayName }}</span>, enter your 4-digit PIN.
+          Hi <span class="font-semibold text-teal-900">{{ displayName }}</span
+          ><ng-container *ngIf="!isKnocDocAccount">, enter your 4-digit PIN</ng-container>.
         </p>
+        <div *ngIf="isKnocDocAccount" class="mt-5 flex flex-col items-center">
+          <div
+            class="inline-flex items-center gap-1.5 rounded-full border border-black/[0.08] bg-white px-3.5 py-1.5 shadow-sm"
+          >
+            <img src="assets/icons/knocdocLogoWB.png" alt="" class="h-[18px] w-[18px]" />
+            <span
+              class="text-[13px] font-extrabold tracking-tight"
+              style="font-family: 'Bahnschrift', 'Segoe UI', system-ui, sans-serif"
+            ><span class="text-[#000068]">Knoc</span><span class="text-[#3EB3FF]">Doc</span></span>
+            <span class="text-[13px] font-medium text-teal-900/60">account found</span>
+          </div>
+          <p class="mt-2.5 text-center text-xs leading-relaxed text-teal-900/55">
+            Enter the same 4-digit PIN you use on KnocDoc.
+          </p>
+        </div>
         <div class="mt-5">
           <app-pin-input
             [hasError]="!!authError"

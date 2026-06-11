@@ -32,6 +32,15 @@ export interface CarePlan {
   whenToSeekUrgent?: string;
 }
 
+// AI's self-rated confidence in the generated report. Absent on reports
+// generated before this feature shipped.
+export interface ConfidenceAssessment {
+  score: number; // 0-100
+  level: 'low' | 'moderate' | 'high';
+  factors: string[];
+  missing: string[];
+}
+
 export interface Report {
   summary: string;
   assessmentIntro?: string;
@@ -39,6 +48,7 @@ export interface Report {
   plan?: CarePlan;
   soap: Soap;
   suggestedSpecialty: string;
+  confidence?: ConfidenceAssessment;
   disclaimer?: string;
   generatedAt?: string;
 }
@@ -94,6 +104,8 @@ export interface MessageResponse {
   askedCount?: number;
   progress?: number;
   stepsLeft?: number;
+  // True when this report replaced an earlier one (post-report amend flow).
+  updated?: boolean;
   disclaimer?: string;
 }
 

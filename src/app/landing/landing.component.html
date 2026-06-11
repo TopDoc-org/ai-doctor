@@ -28,8 +28,16 @@
       <a class="hover:text-teal-600">Pricing</a>
     </div>
     <div class="flex shrink-0 items-center gap-2 sm:gap-3">
-      <button (click)="login()" class="rounded-full border border-teal-700/30 px-3 py-1.5 text-sm font-medium text-teal-900 hover:bg-white sm:px-4">Log in</button>
-      <button (click)="login()" class="rounded-full bg-teal-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-teal-700 sm:px-4">Sign up</button>
+      <ng-container *ngIf="!isLoggedIn; else loggedInNav">
+        <button (click)="login()" class="rounded-full border border-teal-700/30 px-3 py-1.5 text-sm font-medium text-teal-900 hover:bg-white sm:px-4">Log in</button>
+        <button (click)="login()" class="rounded-full bg-teal-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-teal-700 sm:px-4">Sign up</button>
+      </ng-container>
+      <ng-template #loggedInNav>
+        <button (click)="login()" class="flex items-center gap-1.5 rounded-full bg-teal-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-teal-700 sm:px-4">
+          <span class="material-icons" style="font-size:16px">history</span>
+          My consults
+        </button>
+      </ng-template>
     </div>
   </nav>
 

@@ -82,12 +82,28 @@ export class ReportPdfService {
     w.doc.setTextColor(17, 24, 39);
   }
 
+  // jsPDF's built-in Helvetica is Latin-1 only. LLM text often contains
+  // non-breaking hyphens (U+2011), narrow spaces (U+202F), smart quotes etc. —
+  // these break jsPDF's width measurement so lines neither wrap nor clip
+  // correctly (stretched, cut off at the page edge). Normalize to ASCII.
+  private sanitize(text: string): string {
+    return String(text)
+      .replace(/[\u2010-\u2015\u2212]/g, '-') // hyphens & dashes (incl. non-breaking U+2011)
+      .replace(/[\u2018\u2019\u201A\u2032]/g, "'") // smart single quotes
+      .replace(/[\u201C\u201D\u201E\u2033]/g, '"') // smart double quotes
+      .replace(/[\u00A0\u2000-\u200B\u202F\u205F\u3000]/g, ' ') // exotic spaces (incl. narrow nbsp U+202F)
+      .replace(/\u2026/g, '...')
+      .replace(/[\u2022\u00B7]/g, '-')
+      .replace(/[^\x20-\x7E\n]/g, ''); // drop anything else non-printable-ASCII
+  }
+
   private para(
     w: Writer,
     text: string,
     opts: { bold?: boolean; size?: number; indent?: number; color?: [number, number, number] } = {}
   ): void {
     if (!text) return;
+    text = this.sanitize(text);
     const size = opts.size ?? 10.5;
     const indent = opts.indent ?? 0;
     w.doc.setFont('helvetica', opts.bold ? 'bold' : 'normal');
@@ -105,6 +121,7 @@ export class ReportPdfService {
 
   private bullet(w: Writer, text: string): void {
     if (!text) return;
+    text = this.sanitize(text);
     const size = 10.5;
     const lh = size + this.lineGap;
     w.doc.setFont('helvetica', 'normal');
@@ -179,6 +196,24 @@ export class ReportPdfService {
       }
     }
 
+    const conf = r.confidence;
+    if (conf) {
+      this.heading(w, 'AI confidence in this summary');
+      this.para(w, `Score: ${conf.score}/100 (${conf.level})`, { bold: true });
+      conf.factors?.forEach((f) => this.bullet(w, f));
+      if (conf.missing?.length) {
+        this.gap(w, 4);
+        this.para(w, 'What could change this assessment', { bold: true });
+        conf.missing.forEach((m) => this.bullet(w, m));
+      }
+      this.gap(w, 4);
+      this.para(
+        w,
+        "This reflects the AI's own estimate of how well the interview supports this summary — not diagnostic certainty.",
+        { size: 9, color: [107, 114, 128] }
+      );
+    }
+
     this.writeSoap(w, r);
   }
 
@@ -211,13 +246,15 @@ export class ReportPdfService {
     this.para(w, disclaimer, { size: 8.5, color: [107, 114, 128] });
   }
 
-  // Splits multi-line / sentence text into bullet lines (mirrors the UI helper).
+  // Splits multi-line / sentence text into bullet lines. Mirrors the UI helper
+  // (toBullets in triage-shell) — including the ";" split — so the PDF carries
+  // the same bullets the user saw on screen.
   private toBullets(val?: string): string[] {
     if (!val) return [];
-    return val
-      .split(/\n|(?<=\.)\s+(?=[A-Z])/)
-      .map((s) => s.trim())
-      .filter(Boolean);
+    return this.sanitize(val)
+      .split(/\n|;\s*|(?<=\.)\s+(?=[A-Z])/)
+      .map((s) => s.trim().replace(/\.$/, ''))
+      .filter((s) => s.length > 1);
   }
 }
 

@@ -3,6 +3,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
 import { environment } from '../../environments/environment';
 import { CountryService } from '../ai-doctor/services/country.service';
+import { AiDoctorStateService } from '../ai-doctor/services/ai-doctor-state.service';
 import { SeoService } from '../core/seo.service';
 
 @Component({
@@ -69,9 +70,15 @@ export class LandingComponent implements OnInit, OnDestroy {
   // read sensibly without JS (it swaps to "You are in X" after detection).
   readonly isBrowser: boolean;
 
+  // Browser-only (state reads localStorage, unavailable during prerender). The
+  // prerendered HTML always shows Log in / Sign up; this swaps them out after
+  // hydration for users who already have a session.
+  isLoggedIn = false;
+
   constructor(
     private router: Router,
     private country: CountryService,
+    private state: AiDoctorStateService,
     private seo: SeoService,
     @Inject(PLATFORM_ID) platformId: Object,
   ) {
@@ -102,6 +109,7 @@ export class LandingComponent implements OnInit, OnDestroy {
     this.seo.setJsonLd('faq', this.faqSchema());
 
     if (this.isBrowser) {
+      this.isLoggedIn = this.state.isLoggedIn;
       // Typewriter is a self-rescheduling macrotask loop — it would keep the app
       // from ever becoming stable during prerender, so it is browser-only.
       this.typePlaceholder();

@@ -84,10 +84,17 @@ export class AiDoctorApiService {
     return this.http.get<SessionState>(`${this.base}/session/${sessionId}`);
   }
 
-  sendMessage(sessionId: string, text: string): Observable<MessageResponse> {
+  sendMessage(
+    sessionId: string,
+    text: string,
+    opts?: { amend?: boolean }
+  ): Observable<MessageResponse> {
     return this.http.post<MessageResponse>(`${this.base}/message`, {
       sessionId,
       text,
+      // Post-report amend: tells the backend to re-open the interview and
+      // regenerate the report with the added/corrected details.
+      amend: opts?.amend || undefined,
     });
   }
 
