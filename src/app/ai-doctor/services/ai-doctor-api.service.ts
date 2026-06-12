@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { MessageResponse, DoctorsResponse, Report } from '../models';
+import { MessageResponse, DoctorsResponse, Report, SpecialtySuggestion } from '../models';
 import { AiDoctorStateService } from './ai-doctor-state.service';
 import { AffiliateService } from './affiliate.service';
 
@@ -16,6 +16,7 @@ export interface SessionState {
   hasLead: boolean;
   triageState?: any;
   suggestedSpecialty?: string | null;
+  suggestedSpecialties?: SpecialtySuggestion[] | null;
 }
 
 // --- PIN auth (TopDoc /user) ---
@@ -48,6 +49,7 @@ export interface ConsultSummary {
   title: string;
   hasReport: boolean;
   suggestedSpecialty: string | null;
+  suggestedSpecialties?: SpecialtySuggestion[] | null;
   emergency: boolean;
 }
 

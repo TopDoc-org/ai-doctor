@@ -5,7 +5,14 @@ import { AiDoctorApiService } from '../../services/ai-doctor-api.service';
 import { AiDoctorStateService } from '../../services/ai-doctor-state.service';
 import { GeolocationService } from '../../services/geolocation.service';
 import { CountryService } from '../../services/country.service';
-import { ChatMessage, Doctor, MessageResponse, PartnerOffer, Report } from '../../models';
+import {
+  ChatMessage,
+  Doctor,
+  MessageResponse,
+  PartnerOffer,
+  Report,
+  SpecialtySuggestion,
+} from '../../models';
 import { ReportPdfService } from '../../services/report-pdf.service';
 
 @Component({
@@ -74,7 +81,10 @@ export class TriageShellComponent implements OnInit {
   // auth gate + consult history
   showAuth = false;
   showHistory = false;
-  pendingAction: 'pdf' | 'soap' | 'doctors' | null = null;
+  pendingAction: 'pdf' | 'soap' | 'doctors' | 'home' | null = null;
+
+  // "leaving the chat" confirmation (anonymous users with an active chat)
+  showLeaveDialog = false;
 
   // side drawer (account menu)
   showDrawer = false;
@@ -197,6 +207,9 @@ export class TriageShellComponent implements OnInit {
         this.amending = s.triageState?.phase === 'amending';
         this.emergency = !!s.emergency;
         if (s.suggestedSpecialty) this.state.suggestedSpecialty = s.suggestedSpecialty;
+        if (s.suggestedSpecialties?.length) {
+          this.state.suggestedSpecialties = s.suggestedSpecialties;
+        }
         if (s.hasLead) this.state.leadCaptured = true;
         if (s.age != null) {
           this.age = s.age;
@@ -401,6 +414,10 @@ export class TriageShellComponent implements OnInit {
         if (res.report) {
           this.report = res.report;
           this.state.report = res.report;
+          this.state.suggestedSpecialty = res.report.suggestedSpecialty || null;
+          this.state.suggestedSpecialties = res.report.suggestedSpecialties || [];
+          // A new/updated report resets the user's pick back to the primary.
+          this.state.selectedSpecialty = null;
         }
         if (this.amending) {
           this.amending = false;
@@ -468,9 +485,51 @@ export class TriageShellComponent implements OnInit {
     }
   }
 
-  private openAuth(action: 'pdf' | 'soap' | 'doctors' | null): void {
+  private openAuth(action: 'pdf' | 'soap' | 'doctors' | 'home' | null): void {
     this.pendingAction = action;
     this.showAuth = true;
+  }
+
+  // ---- Leaving the chat (logo -> home) ----
+  // An anonymous user with a live conversation gets a heads-up first: log in to
+  // save it, or continue and recover it later from the "previous chat" banner.
+  // Logged-in users' chats are already in "My consults", so they go straight home.
+  goHome(): void {
+    const hasConversation =
+      !!this.state.sessionId && this.messages.some((m) => m.role === 'user');
+    if (!this.state.isLoggedIn && hasConversation) {
+      this.showLeaveDialog = true;
+      return;
+    }
+    this.state.stashSession();
+    this.router.navigate(['/']);
+  }
+
+  leaveAndLogin(): void {
+    this.showLeaveDialog = false;
+    this.openAuth('home');
+  }
+
+  leaveWithoutSaving(): void {
+    this.showLeaveDialog = false;
+    this.state.stashSession();
+    this.router.navigate(['/']);
+  }
+
+  // ---- Previous (unsaved) chat banner ----
+  get hasPrevChat(): boolean {
+    return !!this.state.prevSessionId;
+  }
+
+  loadPreviousChat(): void {
+    const prev = this.state.prevSessionId;
+    if (!prev) return;
+    this.state.prevSessionId = null;
+    this.openPastSession(prev);
+  }
+
+  dismissPreviousChat(): void {
+    this.state.prevSessionId = null;
   }
 
   // Header "My consults / Log in": logged-in -> history, else open auth (no action).
@@ -543,6 +602,8 @@ export class TriageShellComponent implements OnInit {
     if (action === 'pdf') this.runPdf();
     if (action === 'soap') this.runSoapPdf();
     if (action === 'doctors') this.openLocationPrompt();
+    // Chat is now linked to the account (captureLead above) — safe to go home.
+    if (action === 'home') this.router.navigate(['/']);
   }
 
   // Log out -> clear auth + chat and return to landing.
@@ -634,7 +695,7 @@ export class TriageShellComponent implements OnInit {
 
   private fetchDoctors(locPart: { lat?: number; lng?: number; city?: string }): void {
     const sid = this.state.sessionId || undefined;
-    const specialty = this.report?.suggestedSpecialty || this.state.suggestedSpecialty || undefined;
+    const specialty = this.selectedSpecialty || undefined;
     this.doctorsLoading = true;
     this.api.findDoctors({ sessionId: sid, specialty, ...locPart }).subscribe({
       next: (res) => {
@@ -669,7 +730,7 @@ export class TriageShellComponent implements OnInit {
 
   // Why the recommended doctor is a good fit (template — no extra LLM cost).
   recommendReason(d: Doctor): string {
-    const spec = this.report?.suggestedSpecialty || this.state.suggestedSpecialty || 'your concern';
+    const spec = this.selectedSpecialty || 'your concern';
     const bits = [`Matches the suggested specialist for you (${spec})`];
     if (d.rating) {
       bits.push(
@@ -700,13 +761,59 @@ export class TriageShellComponent implements OnInit {
     return colors[h];
   }
 
+  // Unified specialist list: ranked array from the report, or a single entry
+  // synthesized from the legacy string — one code path for old and new reports.
+  get specialists(): SpecialtySuggestion[] {
+    const list =
+      this.report?.suggestedSpecialties || this.state.suggestedSpecialties;
+    if (list?.length) return list;
+    const single = this.report?.suggestedSpecialty || this.state.suggestedSpecialty;
+    return single ? [{ specialty: single, primary: true }] : [];
+  }
+
+  get multiSpecialist(): boolean {
+    return this.specialists.length > 1;
+  }
+
+  // The specialty every CTA / doctor search uses: the user's pick, else primary.
+  get selectedSpecialty(): string | null {
+    const sel = this.state.selectedSpecialty;
+    if (sel && this.specialists.some((s) => s.specialty === sel)) return sel;
+    return this.specialists[0]?.specialty || null;
+  }
+
+  // The non-selected alternatives — surfaced as "Also recommended" links.
+  get otherSpecialists(): SpecialtySuggestion[] {
+    const sel = this.selectedSpecialty;
+    return this.specialists.filter((s) => s.specialty !== sel);
+  }
+
+  selectSpecialist(specialty: string): void {
+    if (specialty === this.selectedSpecialty) return;
+    this.state.selectedSpecialty = specialty;
+    // Results on screen belong to the previous specialty — refetch in place
+    // with the location we already have, else clear so the next search is right.
+    if (this.doctors.length || this.affiliateDoctors.length) {
+      this.doctors = [];
+      this.affiliateDoctors = [];
+      this.affiliateOffer = null;
+      const loc = this.state.location;
+      if (loc?.lat != null && loc?.lng != null) {
+        this.fetchDoctors({ lat: loc.lat, lng: loc.lng });
+      } else if (this.city.trim()) {
+        this.fetchDoctors({ city: this.city.trim() });
+      }
+    }
+  }
+
   // The specialist recommended by the report, with the right article — used to
   // personalise the "connect with a doctor" surfaces ("an Orthopedist", "a
   // Neurologist"). Falls back to the generic wording when no report yet.
   get specialistLabel(): string {
-    const s = this.report?.suggestedSpecialty || this.state.suggestedSpecialty;
+    const s = this.selectedSpecialty;
     if (!s) return 'a licensed doctor';
-    return `${/^[aeiou]/i.test(s) ? 'an' : 'a'} ${s}`;
+    // "u" excluded: U-initial specialties (Urologist) start with a "yoo" sound.
+    return `${/^[aeio]/i.test(s) ? 'an' : 'a'} ${s}`;
   }
 
   // Split a SOAP field into readable bullet lines.

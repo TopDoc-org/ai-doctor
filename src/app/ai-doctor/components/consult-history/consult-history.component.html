@@ -33,9 +33,9 @@
         <span class="mt-1 flex items-center gap-2 text-[11px] text-teal-900/50">
           <span>{{ s.updatedAt | date: 'mediumDate' }}</span>
           <span
-            *ngIf="s.suggestedSpecialty"
+            *ngFor="let chip of specialtyChips(s)"
             class="rounded-full bg-teal-100 px-2 py-0.5 font-medium text-teal-700"
-            >{{ s.suggestedSpecialty }}</span
+            >{{ chip }}</span
           >
           <span
             *ngIf="s.emergency"

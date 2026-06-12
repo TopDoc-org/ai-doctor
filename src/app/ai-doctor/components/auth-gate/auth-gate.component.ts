@@ -26,8 +26,8 @@ const SIGNUP_SOURCE = 'aiDoctor';
   templateUrl: './auth-gate.component.html',
 })
 export class AuthGateComponent implements OnInit {
-  // 'pdf' | 'soap' | 'doctors' gates run a pending action on success; null = pure login.
-  @Input() pendingAction: 'pdf' | 'soap' | 'doctors' | null = null;
+  // 'pdf' | 'soap' | 'doctors' | 'home' gates run a pending action on success; null = pure login.
+  @Input() pendingAction: 'pdf' | 'soap' | 'doctors' | 'home' | null = null;
   @Input() sessionId: string | null = null;
 
   // Age/sex captured during the anonymous triage chat. On a brand-new account

@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
-import { ChatMessage, Report, GeoLocation } from '../models';
+import { ChatMessage, Report, GeoLocation, SpecialtySuggestion } from '../models';
 
 const LS_SESSION = 'aiDoctorSessionId';
+const LS_PREV_SESSION = 'aiDoctorPrevSessionId';
 const LS_LEAD = 'aiDoctorLeadCaptured';
 const LS_CONSENT = 'aiDoctorConsent';
 const LS_TOKEN = 'aiDoctorToken';
@@ -17,6 +18,10 @@ export class AiDoctorStateService {
   report: Report | null = null;
   location: GeoLocation | null = null;
   suggestedSpecialty: string | null = null;
+  // Full ranked list from the report (1-3 entries); empty for legacy reports.
+  suggestedSpecialties: SpecialtySuggestion[] = [];
+  // The specialist the user picked from the cards; null = primary/legacy single.
+  selectedSpecialty: string | null = null;
 
   get sessionId(): string | null {
     return localStorage.getItem(LS_SESSION);
@@ -24,6 +29,23 @@ export class AiDoctorStateService {
   set sessionId(id: string | null) {
     if (id) localStorage.setItem(LS_SESSION, id);
     else localStorage.removeItem(LS_SESSION);
+  }
+
+  // Last session left behind without an account — offered back to the user
+  // via the "load previous chat" banner until loaded or dismissed.
+  get prevSessionId(): string | null {
+    return localStorage.getItem(LS_PREV_SESSION);
+  }
+  set prevSessionId(id: string | null) {
+    if (id) localStorage.setItem(LS_PREV_SESSION, id);
+    else localStorage.removeItem(LS_PREV_SESSION);
+  }
+
+  // Park the current session as "previous" (recoverable from the banner),
+  // then clear live state so the next visit starts a fresh chat.
+  stashSession(): void {
+    if (this.sessionId) this.prevSessionId = this.sessionId;
+    this.reset();
   }
 
   get leadCaptured(): boolean {
@@ -98,6 +120,8 @@ export class AiDoctorStateService {
     this.report = null;
     this.location = null;
     this.suggestedSpecialty = null;
+    this.suggestedSpecialties = [];
+    this.selectedSpecialty = null;
     this.sessionId = null;
     localStorage.removeItem(LS_LEAD);
     localStorage.removeItem(LS_CONSENT); // re-ask consent on each new chat

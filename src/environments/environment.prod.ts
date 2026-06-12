@@ -8,4 +8,5 @@ export const environment = {
   adminBase: '/admin', // global super-admin console (cross-clinic)
   ownerBase: '/owner', // creator console (app-wide, owners only)
   emergencyNumbers: { all: '112', ambulance: '108' },
+  gaMeasurementId: 'G-XKGDL4WS32',
 };
