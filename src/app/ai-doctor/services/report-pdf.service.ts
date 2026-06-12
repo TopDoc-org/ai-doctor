@@ -146,7 +146,15 @@ export class ReportPdfService {
   // ---- content --------------------------------------------------------------
 
   private writeFullReport(w: Writer, r: Report): void {
-    this.para(w, `Suggested specialist: ${r.suggestedSpecialty}`, { bold: true, size: 11 });
+    const specs = r.suggestedSpecialties || [];
+    if (specs.length > 1) {
+      this.para(w, 'Suggested specialists:', { bold: true, size: 11 });
+      for (const s of specs) {
+        this.para(w, s.why ? `${s.specialty} — ${s.why}` : s.specialty, { indent: 14 });
+      }
+    } else {
+      this.para(w, `Suggested specialist: ${r.suggestedSpecialty}`, { bold: true, size: 11 });
+    }
     this.gap(w);
 
     this.heading(w, 'Summary');

@@ -10,7 +10,7 @@
     <ng-container *ngIf="authStep === 'phone'">
       <p class="mt-1 text-sm text-teal-900/60">
         Sign in or create an account to
-        {{ pendingAction === 'pdf' ? 'download your report' : pendingAction === 'soap' ? 'download your SOAP note' : pendingAction === 'doctors' ? 'see doctors near you' : 'save your consultations' }}.
+        {{ pendingAction === 'pdf' ? 'download your report' : pendingAction === 'soap' ? 'download your SOAP note' : pendingAction === 'doctors' ? 'see doctors near you' : pendingAction === 'home' ? 'save this conversation to your account' : 'save your consultations' }}.
       </p>
       <input
         [(ngModel)]="mobile"

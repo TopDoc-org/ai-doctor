@@ -41,6 +41,14 @@ export interface ConfidenceAssessment {
   missing: string[];
 }
 
+// One recommended specialist. Reports can suggest 1-3 (ranked, first = primary)
+// when the possible causes span specialties (e.g. Urologist + Nephrologist).
+export interface SpecialtySuggestion {
+  specialty: string;
+  why?: string;
+  primary?: boolean;
+}
+
 export interface Report {
   summary: string;
   assessmentIntro?: string;
@@ -48,6 +56,8 @@ export interface Report {
   plan?: CarePlan;
   soap: Soap;
   suggestedSpecialty: string;
+  // Ranked list; absent on reports generated before multi-specialist shipped.
+  suggestedSpecialties?: SpecialtySuggestion[];
   confidence?: ConfidenceAssessment;
   disclaimer?: string;
   generatedAt?: string;
@@ -99,6 +109,7 @@ export interface MessageResponse {
   emergencyNumbers?: { all: string; ambulance: string };
   sources?: any[];
   suggestedSpecialty?: string | null;
+  suggestedSpecialties?: SpecialtySuggestion[] | null;
   needsLocation?: boolean;
   nextAction?: string;
   askedCount?: number;

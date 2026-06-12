@@ -40,6 +40,18 @@ export class ConsultHistoryComponent implements OnInit {
     });
   }
 
+  // Specialty chips for a session: full ranked list when present (capped at 2,
+  // rest shown as "+N"), else the legacy single specialty.
+  specialtyChips(s: ConsultSummary): string[] {
+    const all = s.suggestedSpecialties?.length
+      ? s.suggestedSpecialties.map((x) => x.specialty)
+      : s.suggestedSpecialty
+        ? [s.suggestedSpecialty]
+        : [];
+    if (all.length <= 2) return all;
+    return [...all.slice(0, 2), `+${all.length - 2}`];
+  }
+
   logout(): void {
     this.state.logout();
     this.loggedOut.emit();
