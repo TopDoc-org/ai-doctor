@@ -440,6 +440,30 @@
             Consult {{ specialistLabel }} now →
           </button>
         </div>
+
+        <!-- report feedback (anonymous, tied to session) -->
+        <div class="mt-4 border-t border-black/5 pt-4">
+          <ng-container *ngIf="!state.feedbackSubmitted; else feedbackThanks">
+            <p class="font-heading font-semibold text-teal-900">Share your feedback</p>
+            <p class="mt-1 text-sm text-teal-900/70">How helpful was this health summary?</p>
+            <div class="mt-2 flex items-center gap-1">
+              <button *ngFor="let n of [1,2,3,4,5]" type="button" (click)="setFeedbackRating(n)" [attr.aria-label]="n + ' star'" class="leading-none">
+                <span class="material-icons text-amber-500" style="font-size:30px">{{ n <= feedbackRating ? 'star' : 'star_border' }}</span>
+              </button>
+            </div>
+            <textarea [(ngModel)]="feedbackText" rows="2" placeholder="Anything we can improve? (optional)"
+              class="mt-3 w-full rounded-lg border border-black/10 px-3 py-2.5 text-sm outline-none focus:border-teal-600"></textarea>
+            <button (click)="submitFeedback()" [disabled]="feedbackRating < 1"
+              class="mt-2 w-full rounded-xl bg-teal-600 px-4 py-3 text-sm font-semibold text-white hover:bg-teal-700 disabled:opacity-60">
+              Submit feedback
+            </button>
+          </ng-container>
+          <ng-template #feedbackThanks>
+            <p class="flex items-center gap-1.5 text-sm font-medium text-teal-700">
+              <span class="material-icons" style="font-size:18px">check_circle</span> Thanks for helping us improve.
+            </p>
+          </ng-template>
+        </div>
       </div>
 
       <!-- doctor discovery loading skeletons -->

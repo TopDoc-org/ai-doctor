@@ -4,6 +4,7 @@ import { ChatMessage, Report, GeoLocation, SpecialtySuggestion } from '../models
 const LS_SESSION = 'aiDoctorSessionId';
 const LS_PREV_SESSION = 'aiDoctorPrevSessionId';
 const LS_LEAD = 'aiDoctorLeadCaptured';
+const LS_FEEDBACK = 'aiDoctorFeedbackDone';
 const LS_CONSENT = 'aiDoctorConsent';
 const LS_TOKEN = 'aiDoctorToken';
 const LS_USERID = 'aiDoctorUserId';
@@ -53,6 +54,15 @@ export class AiDoctorStateService {
   }
   set leadCaptured(v: boolean) {
     localStorage.setItem(LS_LEAD, v ? '1' : '0');
+  }
+
+  // Whether the user has rated the report this session — collapses the inline
+  // feedback form into a "thank you" state and prevents re-submission.
+  get feedbackSubmitted(): boolean {
+    return localStorage.getItem(LS_FEEDBACK) === '1';
+  }
+  set feedbackSubmitted(v: boolean) {
+    localStorage.setItem(LS_FEEDBACK, v ? '1' : '0');
   }
 
   get consented(): boolean {
@@ -124,6 +134,7 @@ export class AiDoctorStateService {
     this.selectedSpecialty = null;
     this.sessionId = null;
     localStorage.removeItem(LS_LEAD);
+    localStorage.removeItem(LS_FEEDBACK);
     localStorage.removeItem(LS_CONSENT); // re-ask consent on each new chat
   }
 }

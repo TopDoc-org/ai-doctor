@@ -69,6 +69,11 @@ export class TriageShellComponent implements OnInit, OnDestroy {
   report: Report | null = null;
   reportOpen = { causes: true, soap: true, confidence: false };
 
+  // Inline report-feedback form (1-5 stars + optional note). Anonymous, tied to
+  // the session; submitted state lives in AiDoctorStateService.feedbackSubmitted.
+  feedbackRating = 0;
+  feedbackText = '';
+
   // Post-report amend: user opted to add/correct details in the same chat; the
   // composer re-opens and the backend regenerates the report when done.
   amending = false;
@@ -662,6 +667,21 @@ export class TriageShellComponent implements OnInit, OnDestroy {
     if (action === 'home') this.router.navigate(['/']);
   }
 
+  // --- Report feedback ---
+  setFeedbackRating(n: number): void {
+    this.feedbackRating = n;
+  }
+
+  // Fire-and-forget, like captureLead — never block the UI on the result.
+  submitFeedback(): void {
+    const sid = this.state.sessionId;
+    if (!sid || this.feedbackRating < 1) return;
+    this.api
+      .submitFeedback(sid, this.feedbackRating, this.feedbackText, this.state.userId)
+      .subscribe({ next: () => {}, error: () => {} });
+    this.state.feedbackSubmitted = true;
+  }
+
   // Log out -> clear auth + chat and return to landing.
   onLoggedOut(): void {
     this.showHistory = false;
@@ -887,6 +907,8 @@ export class TriageShellComponent implements OnInit, OnDestroy {
     this.emergency = false;
     this.report = null;
     this.amending = false;
+    this.feedbackRating = 0;
+    this.feedbackText = '';
     this.doctors = [];
     this.affiliateDoctors = [];
     this.affiliateOffer = null;
