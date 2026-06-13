@@ -28,7 +28,7 @@ export interface SeoData {
 const DEFAULTS: Required<SeoData> = {
   title: `AI Doctor & Free Symptom Checker in ${COUNTRY_TOKEN} | DoctoGuide by KnocDoc`,
   description:
-    `Free AI doctor & symptom checker. Describe your symptoms, get instant AI health guidance, learn which specialist to see, and find trusted doctors near you in ${COUNTRY_TOKEN}. No sign-up. DoctoGuide by KnocDoc.`,
+    `Free AI doctor & symptom checker. Describe your symptoms, get instant AI health guidance, learn which specialist to see, and find doctors near you in ${COUNTRY_TOKEN}. No sign-up. DoctoGuide by KnocDoc.`,
   robots: 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1',
   image: `${SITE_URL}/assets/og-image.png`,
 };

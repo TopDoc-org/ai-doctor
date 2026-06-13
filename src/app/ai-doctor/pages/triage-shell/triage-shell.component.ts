@@ -1,4 +1,13 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  Inject,
+  OnDestroy,
+  OnInit,
+  PLATFORM_ID,
+  ViewChild,
+} from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { environment } from '../../../../environments/environment';
 import { AiDoctorApiService } from '../../services/ai-doctor-api.service';
@@ -20,10 +29,25 @@ import { ReportPdfService } from '../../services/report-pdf.service';
   templateUrl: './triage-shell.component.html',
   styleUrls: ['./triage-shell.component.scss'],
 })
-export class TriageShellComponent implements OnInit {
+export class TriageShellComponent implements OnInit, OnDestroy {
   @ViewChild('scrollAnchor') scrollAnchor?: ElementRef<HTMLDivElement>;
   @ViewChild('composer') composer?: ElementRef<HTMLTextAreaElement>;
   @ViewChild('reportTop') reportTop?: ElementRef<HTMLDivElement>;
+
+  // Greeting doubles as the multilingual hint: the AI mirrors the user's
+  // language (backend behaviour), so show it rather than just claim it.
+  private readonly WELCOME =
+    "Hi! I'm your AI health guide. Tell me what's bothering you — in any language you like: English, हिन्दी, Hinglish…";
+
+  // Composer placeholder cycles through languages to demonstrate that the
+  // user can reply in whichever one they're comfortable with.
+  private readonly PLACEHOLDERS = [
+    'Reply…  (Shift+Enter for a new line)',
+    'Kisi bhi bhasha me likh sakte hain…',
+    'आप किसी भी भाषा में लिख सकते हैं…',
+  ];
+  composerPlaceholder = this.PLACEHOLDERS[0];
+  private placeholderTimer?: ReturnType<typeof setInterval>;
 
   // Country-aware emergency numbers + name (resolved by CountryService on init;
   // start with the environment fallback so the UI renders immediately).
@@ -58,6 +82,10 @@ export class TriageShellComponent implements OnInit {
   sex: 'female' | 'male' | '' = '';
   age: number | null = null;
   ageSexDone = false; // hide the panel only AFTER submit (not while typing)
+  // Adults-only gate: when the structured age input is under 18 we block the
+  // send and surface this message. (Free-text under-18 disclosure is a backend
+  // concern — documented as accepted risk in COMPLIANCE_AUDIT.md.)
+  ageError = '';
 
   // Consult subject: a logged-in user may consult for themselves (reuse their
   // saved profile age/gender) or for someone else (ask fresh, don't touch
@@ -96,7 +124,8 @@ export class TriageShellComponent implements OnInit {
     public state: AiDoctorStateService,
     private geo: GeolocationService,
     private country: CountryService,
-    private pdf: ReportPdfService
+    private pdf: ReportPdfService,
+    @Inject(PLATFORM_ID) private platformId: object
   ) {}
 
   get messages(): ChatMessage[] {
@@ -134,6 +163,14 @@ export class TriageShellComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      this.placeholderTimer = setInterval(() => {
+        const i = this.PLACEHOLDERS.indexOf(this.composerPlaceholder);
+        this.composerPlaceholder =
+          this.PLACEHOLDERS[(i + 1) % this.PLACEHOLDERS.length];
+      }, 4000);
+    }
+
     // Resolve country context (IP-based, cached) -> swap in local emergency
     // numbers + country name. Server may still override per-message later.
     this.country.init().then(() => {
@@ -156,16 +193,17 @@ export class TriageShellComponent implements OnInit {
           this.consumeSeedParam();
           this.send(seed);
         } else {
-          this.state.addMessage({
-            role: 'assistant',
-            text: "Hi! I'm your AI health guide. Tell me what's bothering you and I'll ask a few questions.",
-          });
+          this.state.addMessage({ role: 'assistant', text: this.WELCOME });
         }
       } else if (seed) {
         // history already exists -> don't replay seed; just clean the URL
         this.consumeSeedParam();
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    if (this.placeholderTimer) clearInterval(this.placeholderTimer);
   }
 
   private consumeSeedParam(): void {
@@ -251,8 +289,21 @@ export class TriageShellComponent implements OnInit {
     if (el) el.style.height = 'auto';
   }
 
+  // Adults-only check for the structured age input. Returns false (and sets
+  // ageError) when a valid age under 18 was entered; true otherwise.
+  private validateAge(): boolean {
+    if (this.age != null && this.age < 18) {
+      this.ageError =
+        "DoctoGuide is for adults (18+). For a child's or teen's health concern, a parent or guardian should consult a doctor directly.";
+      return false;
+    }
+    this.ageError = '';
+    return true;
+  }
+
   pickAgeSex(): void {
     if (!this.sex && this.age == null) return;
+    if (!this.validateAge()) return;
     const parts: string[] = [];
     if (this.age != null) parts.push(`I am ${this.age} years old`);
     if (this.sex) parts.push(`biological sex ${this.sex}`);
@@ -264,6 +315,7 @@ export class TriageShellComponent implements OnInit {
   // Self: prefill from the saved profile and let the user confirm. With nothing
   // saved yet, drop straight to the inputs (and persist on submit).
   chooseSelf(): void {
+    this.ageError = '';
     this.consultFor = 'self';
     this.age = this.profileAge;
     this.sex =
@@ -275,6 +327,7 @@ export class TriageShellComponent implements OnInit {
 
   // Someone else: ask fresh, never write back to the account holder's profile.
   chooseOther(): void {
+    this.ageError = '';
     this.consultFor = 'other';
     this.editingDetails = true;
     this.age = null;
@@ -288,6 +341,7 @@ export class TriageShellComponent implements OnInit {
 
   // Saved details confirmed as-is -> send them straight through (no profile write).
   confirmSelf(): void {
+    if (!this.validateAge()) return;
     this.pickAgeSex();
   }
 
@@ -295,6 +349,8 @@ export class TriageShellComponent implements OnInit {
   // the patient profile before sending the triage message.
   submitDetails(): void {
     if (!this.sex && this.age == null) return;
+    // Validate before any profile write so an under-18 DOB is never persisted.
+    if (!this.validateAge()) return;
     if (this.consultFor === 'self' && this.state.isLoggedIn) {
       this.saveProfileAgeSex();
     }
@@ -632,6 +688,7 @@ export class TriageShellComponent implements OnInit {
     this.ageSexDone = false;
     this.age = null;
     this.sex = '';
+    this.ageError = '';
     this.consultFor = null;
     this.editingDetails = false;
     this.reportPending = false;
@@ -837,6 +894,7 @@ export class TriageShellComponent implements OnInit {
     this.ageSexDone = false;
     this.age = null;
     this.sex = '';
+    this.ageError = '';
     this.consultFor = null;
     this.editingDetails = false;
     this.showConsent = false;
@@ -848,10 +906,7 @@ export class TriageShellComponent implements OnInit {
     this.stepsLeft = 0;
     this.reportPending = false;
     // Fresh start in place (no new session yet — created on the first message).
-    this.state.addMessage({
-      role: 'assistant',
-      text: "Hi! I'm your AI health guide. Tell me what's bothering you and I'll ask a few questions.",
-    });
+    this.state.addMessage({ role: 'assistant', text: this.WELCOME });
     this.scrollSoon();
   }
 

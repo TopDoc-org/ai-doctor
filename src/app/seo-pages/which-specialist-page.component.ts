@@ -78,7 +78,7 @@ import { SeoService, SITE_URL } from '../core/seo.service';
       <details>
         <summary>Can DoctoGuide also find doctors near me?</summary>
         <p>
-          Yes. After suggesting the speciality, DoctoGuide can help you find trusted doctors near
+          Yes. After suggesting the speciality, DoctoGuide can help you find doctors near
           you, matched to what you actually need.
         </p>
       </details>
@@ -122,7 +122,7 @@ export class WhichSpecialistPageComponent implements OnInit, OnDestroy {
           name: 'Can DoctoGuide also find doctors near me?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'Yes. After suggesting the speciality, DoctoGuide can help you find trusted doctors near you, matched to what you actually need.',
+            text: 'Yes. After suggesting the speciality, DoctoGuide can help you find doctors near you, matched to what you actually need.',
           },
         },
       ],

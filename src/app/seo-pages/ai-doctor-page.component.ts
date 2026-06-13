@@ -67,8 +67,15 @@ import { SeoService, SITE_URL } from '../core/seo.service';
       <details>
         <summary>Does it work in my country?</summary>
         <p>
-          Yes. DoctoGuide works worldwide, in English, and can adapt guidance like emergency
+          Yes. DoctoGuide works worldwide and can adapt guidance like emergency
           numbers and nearby-doctor search to your location.
+        </p>
+      </details>
+      <details>
+        <summary>Can I chat in Hindi or my own language?</summary>
+        <p>
+          Yes. Type the way you talk — English, Hindi, Hinglish, or another language — and the
+          AI replies in the same language you use.
         </p>
       </details>
       <details>
@@ -118,7 +125,15 @@ export class AiDoctorPageComponent implements OnInit, OnDestroy {
           name: 'Does the AI doctor work in my country?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'Yes. DoctoGuide works worldwide, in English, and can adapt guidance like emergency numbers and nearby-doctor search to your location.',
+            text: 'Yes. DoctoGuide works worldwide and can adapt guidance like emergency numbers and nearby-doctor search to your location.',
+          },
+        },
+        {
+          '@type': 'Question',
+          name: 'Can I chat in Hindi or my own language?',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: 'Yes. Type the way you talk — English, Hindi, Hinglish, or another language — and the AI replies in the same language you use.',
           },
         },
         {

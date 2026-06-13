@@ -25,6 +25,10 @@ export class LandingComponent implements OnInit, OnDestroy {
       text: 'Describe your symptoms or ask any health question — no sign-up, no credit card, no friction.',
     },
     {
+      title: 'Talk in any language',
+      text: 'Type or talk in any language — English, हिन्दी, Hinglish — or just ask the AI to switch to any language you like, anytime.',
+    },
+    {
       title: 'Find the right specialist',
       text: "Not sure who to see? We read your concern and point you to the right speciality — so you don't guess.",
     },
@@ -38,7 +42,7 @@ export class LandingComponent implements OnInit, OnDestroy {
     },
     {
       title: 'Doctors near you',
-      text: 'Find trusted doctors close by in seconds, matched to what you actually need.',
+      text: 'Find doctors close by in seconds, matched to what you actually need.',
     },
   ];
 
@@ -46,7 +50,9 @@ export class LandingComponent implements OnInit, OnDestroy {
   useCases = [
     'Is it safe to take antacids on an empty stomach?',
     'Sore throat and mild fever for 3 days…',
+    'mere pet me dard hai aur ulti ho rahi hai…',
     'Which specialist should I see for chest pain?',
+    'मुझे तीन दिन से बुखार है…',
     'My child has a rash — what could it be?',
     'Persistent headache for a week — should I worry?',
   ];
@@ -59,6 +65,7 @@ export class LandingComponent implements OnInit, OnDestroy {
   // unvetted maps directory.
   trustChips = [
     { icon: 'money_off', label: 'Free — no card, no sign-up' },
+    { icon: 'translate', label: 'Ask in any language' },
     { icon: 'medical_services', label: 'Suggests the right specialist' },
     { icon: 'lock', label: 'Privacy-first' },
     { icon: 'shield', label: 'Private & secure' },
@@ -74,6 +81,7 @@ export class LandingComponent implements OnInit, OnDestroy {
   // prerendered HTML always shows Log in / Sign up; this swaps them out after
   // hydration for users who already have a session.
   isLoggedIn = false;
+  menuOpen = false;
 
   constructor(
     private router: Router,
@@ -154,7 +162,7 @@ export class LandingComponent implements OnInit, OnDestroy {
           name: 'Which specialist should I see for my symptoms?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'Describe what you are feeling in plain language and DoctoGuide reads your concern and points you to the right speciality, then helps you find trusted doctors near you.',
+            text: 'Describe what you are feeling in plain language and DoctoGuide reads your concern and points you to the right speciality, then helps you find doctors near you.',
           },
         },
         {
@@ -163,6 +171,14 @@ export class LandingComponent implements OnInit, OnDestroy {
           acceptedAnswer: {
             '@type': 'Answer',
             text: 'No. You can use the AI symptom checker instantly with no sign-up. You only create an account if you want to save your health summary or past consultations.',
+          },
+        },
+        {
+          '@type': 'Question',
+          name: 'Can I chat in Hindi or my own language?',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: 'Yes. Type the way you talk — English, Hindi, Hinglish, or another language — and the AI replies in the same language you use.',
           },
         },
         {
@@ -208,5 +224,38 @@ export class LandingComponent implements OnInit, OnDestroy {
   // Log in / Sign up both open the PIN auth gate inside the triage shell.
   login() {
     this.router.navigate(['/triage'], { queryParams: { login: 1 } });
+  }
+
+  // --- Logged-in avatar menu (mirrors the triage-shell side drawer) ---
+  get userName(): string | null {
+    return this.isBrowser ? this.state.userName : null;
+  }
+  get userMobile(): string | null {
+    return this.isBrowser ? this.state.userMobile : null;
+  }
+  get userInitial(): string {
+    return (this.userName || '').trim().charAt(0).toUpperCase();
+  }
+
+  goProfile() {
+    this.menuOpen = false;
+    this.router.navigate(['/triage/profile']);
+  }
+
+  goChangePin() {
+    this.menuOpen = false;
+    this.router.navigate(['/triage/change-pin']);
+  }
+
+  // ?login=1 + logged in => triage shell opens the consult-history panel.
+  goConsults() {
+    this.menuOpen = false;
+    this.login();
+  }
+
+  logout() {
+    this.menuOpen = false;
+    this.state.logout();
+    this.isLoggedIn = false;
   }
 }

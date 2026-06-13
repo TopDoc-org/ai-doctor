@@ -1,10 +1,11 @@
 import { Component } from '@angular/core';
 import { environment } from '../../environments/environment';
+import { LEGAL_CONFIG } from './legal-config';
 
 @Component({
   selector: 'app-privacy',
   template: `
-    <app-legal-layout title="Privacy Policy" updated="To be confirmed" [appName]="appName">
+    <app-legal-layout title="Privacy Policy" [updated]="legal.lastUpdated" [appName]="appName">
       <p>
         This Privacy Policy explains how {{ appName }} ("we", "us") collects, uses,
         and protects your personal information when you use the Service. We process
@@ -16,8 +17,9 @@ import { environment } from '../../environments/environment';
 
       <h2>1. Who we are (Data Fiduciary)</h2>
       <p>
-        <strong>[Legal entity name, address — to be confirmed]</strong> is the data
-        fiduciary responsible for your personal data.
+        <strong>{{ legal.entityName }}</strong> (registered at
+        <strong>{{ legal.entityAddress }}</strong>) is the data fiduciary
+        responsible for your personal data.
       </p>
 
       <h2>2. Information we collect</h2>
@@ -27,6 +29,7 @@ import { environment } from '../../environments/environment';
         <li><strong>Generated content:</strong> the health summaries we create for you.</li>
         <li><strong>Location:</strong> a city/area you type, or device location (only if you grant permission) — used solely to find nearby doctors.</li>
         <li><strong>Technical data:</strong> a session identifier and basic device/usage data needed to run the Service.</li>
+        <li><strong>Approximate location from your IP address:</strong> we detect your approximate country from your IP address using third-party geolocation services (geojs.io and ipwho.is) so we can show you the right local emergency numbers and localised content.</li>
       </ul>
 
       <h2>3. Why we use it (purposes)</h2>
@@ -60,14 +63,14 @@ import { environment } from '../../environments/environment';
         Your data is stored on secured servers. PINs are stored using one-way hashing.
         We apply reasonable security practices to protect your information, though no
         system is completely secure.
-        <strong>[Data localisation / hosting location — to be confirmed.]</strong>
+        <strong>{{ legal.hostingLocation }}</strong>
       </p>
 
       <h2>7. Retention</h2>
       <p>
         We keep your personal and health data only as long as needed for the purposes
         above or as required by law, after which it is deleted or anonymised.
-        <strong>[Specific retention periods — to be confirmed.]</strong>
+        <strong>{{ legal.retentionPeriods }}</strong>
       </p>
 
       <h2>8. Your rights</h2>
@@ -79,7 +82,7 @@ import { environment } from '../../environments/environment';
       </ul>
       <p>
         To exercise any right, contact us at
-        <strong>[privacy contact email — to be confirmed]</strong>.
+        <strong>{{ legal.privacyEmail }}</strong>.
       </p>
 
       <h2>9. Children</h2>
@@ -91,7 +94,9 @@ import { environment } from '../../environments/environment';
       <h2>10. Grievance Officer</h2>
       <p>
         In accordance with the DPDP Act and IT Rules, you can contact our Grievance
-        Officer: <strong>[name, email, response timeline — to be confirmed]</strong>.
+        Officer: <strong>{{ legal.grievanceOfficerName }}</strong>
+        (<strong>{{ legal.grievanceOfficerEmail }}</strong>), who will respond
+        within <strong>{{ legal.grievanceResponseTime }}</strong>.
       </p>
 
       <h2>11. Changes</h2>
@@ -107,4 +112,5 @@ import { environment } from '../../environments/environment';
 })
 export class PrivacyComponent {
   appName = environment.appName;
+  legal = LEGAL_CONFIG;
 }

@@ -7,6 +7,6 @@ export const environment = {
   partnerBase: '/partner', // clinic affiliate / sales-funnel endpoints
   adminBase: '/admin', // global super-admin console (cross-clinic)
   ownerBase: '/owner', // creator console (app-wide, owners only)
-  emergencyNumbers: { all: '112', ambulance: '108' },
+  emergencyNumbers: { all: '112', ambulance: '112' },
   gaMeasurementId: '', // empty = analytics disabled in dev
 };

@@ -1,11 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { CountryService } from '../ai-doctor/services/country.service';
+import { LEGAL_CONFIG } from './legal-config';
 
 @Component({
   selector: 'app-disclaimer',
   template: `
-    <app-legal-layout title="Medical Disclaimer" updated="To be confirmed" [appName]="appName">
+    <app-legal-layout title="Medical Disclaimer" [updated]="legal.lastUpdated" [appName]="appName">
       <p>
         <strong>{{ appName }} is not a doctor and does not practise medicine.</strong>
         {{ appName }} is an artificial-intelligence health-information and
@@ -38,11 +39,16 @@ import { CountryService } from '../ai-doctor/services/country.service';
       </p>
 
       <h2>Emergencies</h2>
-      <p>
+      <p *ngIf="countryName">
         <strong>{{ appName }} is not for emergencies.</strong> If you think you may
         have a medical emergency{{ inCountry }}, call <strong>{{ emergencyNumbers.all }}</strong>
         (all emergencies) or <strong>{{ emergencyNumbers.ambulance }}</strong> (ambulance)
         immediately, or go to the nearest emergency department.
+      </p>
+      <p *ngIf="!countryName">
+        <strong>{{ appName }} is not for emergencies.</strong> If you think you may
+        have a medical emergency, call your local emergency number immediately, or go
+        to the nearest emergency department.
       </p>
 
       <h2>Doctor listings</h2>
@@ -70,6 +76,7 @@ import { CountryService } from '../ai-doctor/services/country.service';
 })
 export class DisclaimerComponent implements OnInit {
   appName = environment.appName;
+  legal = LEGAL_CONFIG;
   emergencyNumbers = environment.emergencyNumbers;
   countryName: string | null = null;
 

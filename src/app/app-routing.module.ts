@@ -19,7 +19,7 @@ const routes: Routes = [
         // %COUNTRY% only in suffix positions — it collapses cleanly when unknown.
         title: 'AI Doctor & Free Symptom Checker in %COUNTRY% | DoctoGuide by KnocDoc',
         description:
-          'Free AI doctor & symptom checker. Describe your symptoms, get instant AI health guidance, learn which specialist to see, and find trusted doctors near you in %COUNTRY%. No sign-up. DoctoGuide by KnocDoc.',
+          'Free AI doctor & symptom checker. Describe your symptoms, get instant AI health guidance, learn which specialist to see, and find doctors near you in %COUNTRY%. No sign-up. DoctoGuide by KnocDoc.',
       },
     },
   },

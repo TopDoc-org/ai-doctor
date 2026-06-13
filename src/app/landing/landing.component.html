@@ -11,7 +11,8 @@
   ></div>
 
   <!-- nav -->
-  <nav class="relative z-10 mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-5 sm:px-6">
+  <!-- z-30: avatar dropdown overflows below the nav and must paint above <main> (z-10) -->
+  <nav class="relative z-30 mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-5 sm:px-6">
     <div class="flex min-w-0 shrink flex-col leading-tight">
       <div class="flex items-center gap-1 truncate font-heading text-xl font-extrabold text-teal-900 sm:text-2xl">
         <span class="truncate">{{ appName }}</span>
@@ -33,10 +34,38 @@
         <button (click)="login()" class="rounded-full bg-teal-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-teal-700 sm:px-4">Sign up</button>
       </ng-container>
       <ng-template #loggedInNav>
-        <button (click)="login()" class="flex items-center gap-1.5 rounded-full bg-teal-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-teal-700 sm:px-4">
-          <span class="material-icons" style="font-size:16px">history</span>
-          My consults
-        </button>
+        <!-- avatar + dropdown mirroring the triage-shell side drawer -->
+        <div class="relative">
+          <button (click)="menuOpen = !menuOpen" aria-label="Account menu" [attr.aria-expanded]="menuOpen"
+            class="flex h-10 w-10 items-center justify-center rounded-full bg-teal-900 font-heading text-base font-bold text-white shadow-sm ring-2 ring-white hover:bg-teal-700">
+            <ng-container *ngIf="userInitial; else avatarIcon">{{ userInitial }}</ng-container>
+            <ng-template #avatarIcon><span class="material-icons" style="font-size:20px">person</span></ng-template>
+          </button>
+
+          <!-- click-away backdrop -->
+          <div *ngIf="menuOpen" class="fixed inset-0 z-20" (click)="menuOpen = false"></div>
+
+          <div *ngIf="menuOpen"
+            class="absolute right-0 z-30 mt-2 w-60 overflow-hidden rounded-2xl border border-teal-100 bg-white py-1 shadow-xl">
+            <div class="border-b border-black/5 px-4 py-3">
+              <p class="truncate font-heading text-sm font-bold text-teal-900">{{ userName || 'My account' }}</p>
+              <p *ngIf="userMobile" class="truncate text-xs text-teal-900/50">+91 {{ userMobile }}</p>
+            </div>
+            <button (click)="goProfile()" class="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-teal-900 hover:bg-teal-50">
+              <span class="material-icons text-teal-600" style="font-size:20px">person</span> Profile
+            </button>
+            <button (click)="goChangePin()" class="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-teal-900 hover:bg-teal-50">
+              <span class="material-icons text-teal-600" style="font-size:20px">password</span> Change PIN
+            </button>
+            <button (click)="goConsults()" class="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-teal-900 hover:bg-teal-50">
+              <span class="material-icons text-teal-600" style="font-size:20px">history</span> My consults
+            </button>
+            <div class="my-1 border-t border-black/5"></div>
+            <button (click)="logout()" class="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50">
+              <span class="material-icons" style="font-size:20px">logout</span> Log out
+            </button>
+          </div>
+        </div>
       </ng-template>
     </div>
   </nav>
@@ -49,7 +78,7 @@
       <!-- Crawlable, keyword-bearing context for search engines (visually hidden). -->
       <span class="sr-only">
         Free AI doctor and symptom checker for {{ countryForCopy }} — instant AI health guidance,
-        the right specialist to see, and trusted doctors near you.
+        the right specialist to see, and doctors near you.
       </span>
     </h1>
     <!-- rotating hero text (carousel, text-only, branding) -->
@@ -72,19 +101,23 @@
       </p-carousel>
     </div>
 
-    <!-- zero-friction highlight band -->
-    <div class="mx-auto mt-7 flex max-w-2xl flex-wrap items-center justify-center gap-x-5 gap-y-2 rounded-2xl border border-teal-200 bg-teal-50/80 px-4 py-3 text-sm font-semibold text-teal-800">
-      <span class="flex items-center gap-1.5">
+    <!-- zero-friction highlight pills -->
+    <div class="mx-auto mt-7 flex max-w-3xl flex-wrap items-center justify-center gap-2.5">
+      <span class="flex items-center gap-1.5 rounded-full border border-teal-200 bg-white px-4 py-2 text-sm font-semibold text-teal-800 shadow-sm">
         <span class="material-icons text-teal-600" style="font-size:18px">check_circle</span> 100% free to start
       </span>
-      <span class="flex items-center gap-1.5">
+      <span class="flex items-center gap-1.5 rounded-full border border-teal-200 bg-white px-4 py-2 text-sm font-semibold text-teal-800 shadow-sm">
         <span class="material-icons text-teal-600" style="font-size:18px">how_to_reg</span> No sign-up
       </span>
-      <span class="flex items-center gap-1.5">
+      <span class="flex items-center gap-1.5 rounded-full border border-teal-200 bg-white px-4 py-2 text-sm font-semibold text-teal-800 shadow-sm">
         <span class="material-icons text-teal-600" style="font-size:18px">credit_card_off</span> No credit card
       </span>
-      <span class="flex items-center gap-1.5">
+      <span class="flex items-center gap-1.5 rounded-full border border-teal-200 bg-white px-4 py-2 text-sm font-semibold text-teal-800 shadow-sm">
         <span class="material-icons text-teal-600" style="font-size:18px">bolt</span> Ready in seconds
+      </span>
+      <!-- newest capability — filled pill so it reads as the headline feature -->
+      <span class="flex items-center gap-1.5 rounded-full bg-teal-600 px-4 py-2 text-sm font-semibold text-white shadow-md">
+        <span class="material-icons" style="font-size:18px">translate</span> Chat in any language
       </span>
     </div>
 
@@ -109,10 +142,16 @@
         </button>
       </div>
 
+      <!-- multilingual hint: demonstrate, don't just claim -->
+      <p class="mt-2.5 flex items-center justify-center gap-1.5 text-sm font-medium text-teal-800">
+        <span class="material-icons text-teal-600" style="font-size:17px">translate</span>
+        <span>Type in <span class="font-semibold">any language</span> — English · हिन्दी · Hinglish — the AI replies in yours.</span>
+      </p>
+
       <!-- specialty-help callout -->
       <p class="mx-auto mt-6 flex max-w-xl items-start justify-center gap-2 text-sm text-teal-900/70">
         <span class="material-icons shrink-0 text-teal-600" style="font-size:17px; line-height:1.4">medical_services</span>
-        <span>Not sure which doctor to see? Just describe what you're feeling — we'll point you to the right speciality.</span>
+        <span>Not sure which doctor to see? Just describe what you're feeling — in any language you're comfortable with — and we'll point you to the right speciality.</span>
       </p>
     </div>
 
@@ -136,7 +175,7 @@
         {{ appName }} by KnocDoc is a free AI health assistant built for {{ countryForCopy }}. Describe your
         symptoms in plain language and get instant, easy-to-read AI health guidance — what could
         be going on, which specialist to see, and when to seek urgent care. When you're ready,
-        find trusted doctors near you. No sign-up, no credit card, ready in seconds.
+        find doctors near you. No sign-up, no credit card, ready in seconds.
       </p>
 
       <h3 class="mt-10 font-heading text-xl font-bold text-teal-900">Frequently asked questions</h3>
@@ -166,7 +205,7 @@
           </summary>
           <p class="mt-2 font-body text-sm leading-relaxed text-teal-900/70">
             Describe what you're feeling in plain language and DoctoGuide reads your concern and
-            points you to the right speciality, then helps you find trusted doctors near you{{ inCountry }}.
+            points you to the right speciality, then helps you find doctors near you{{ inCountry }}.
           </p>
         </details>
         <details class="group rounded-2xl border border-teal-200 bg-white/70 p-4">
@@ -176,6 +215,15 @@
           <p class="mt-2 font-body text-sm leading-relaxed text-teal-900/70">
             No. You can use the AI symptom checker instantly with no sign-up. You only create an
             account if you want to save your health summary or past consultations.
+          </p>
+        </details>
+        <details class="group rounded-2xl border border-teal-200 bg-white/70 p-4">
+          <summary class="cursor-pointer font-heading text-base font-semibold text-teal-900">
+            Can I chat in Hindi or my own language?
+          </summary>
+          <p class="mt-2 font-body text-sm leading-relaxed text-teal-900/70">
+            Yes. Type the way you talk — English, हिन्दी, Hinglish, or another language — and
+            the AI replies in the same language you use.
           </p>
         </details>
         <details class="group rounded-2xl border border-teal-200 bg-white/70 p-4">
