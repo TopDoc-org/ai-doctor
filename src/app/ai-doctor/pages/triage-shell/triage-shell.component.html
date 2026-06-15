@@ -637,6 +637,15 @@
         <p class="text-[11px] text-teal-900/40">Results from Google/OpenStreetMap. Please verify details before visiting.</p>
       </div>
 
+      <!-- No verified specialist here: offer to search another city/area. Shown for
+           both "no results" and "results but none match the specialty". -->
+      <button *ngIf="doctorsSearched && !hasSpecialtyMatch && !doctorsLoading"
+        (click)="searchAnotherArea()"
+        class="mt-1 flex w-full items-center justify-center gap-1 rounded-lg border border-teal-600 py-2.5 text-sm font-semibold text-teal-700 hover:bg-teal-50">
+        <span class="material-icons" style="font-size:16px">travel_explore</span>
+        Search {{ selectedSpecialty || 'doctors' }} in another area
+      </button>
+
       <div #scrollAnchor></div>
     </div>
   </main>

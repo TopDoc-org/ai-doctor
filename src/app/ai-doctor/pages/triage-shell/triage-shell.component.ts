@@ -110,6 +110,10 @@ export class TriageShellComponent implements OnInit, OnDestroy {
   askCity = false;
   city = '';
   locError = '';
+  // Last place we searched (for the "not found here — try another area" offer).
+  lastSearchPlace = '';
+  // True once a doctor search has returned (gates the "Search another area" CTA).
+  doctorsSearched = false;
 
   // auth gate + consult history
   showAuth = false;
@@ -763,7 +767,17 @@ export class TriageShellComponent implements OnInit, OnDestroy {
       return;
     }
     this.askCity = false;
+    this.lastSearchPlace = loc.city || loc.district || 'your area';
     this.fetchDoctors({ lat: loc.lat, lng: loc.lng });
+  }
+
+  // Re-run the same-specialty search in a different place when nothing matched
+  // here. Reuses the existing location modal + submitCity/useMyLocation flow;
+  // selectedSpecialty persists, so only the location changes.
+  searchAnotherArea(): void {
+    this.city = '';
+    this.locError = '';
+    this.askCity = true;
   }
 
   submitCity(): void {
@@ -771,6 +785,7 @@ export class TriageShellComponent implements OnInit, OnDestroy {
     if (!c) return;
     this.askCity = false;
     this.doctorsLoading = true;
+    this.lastSearchPlace = c;
     this.fetchDoctors({ city: c });
   }
 
@@ -781,14 +796,22 @@ export class TriageShellComponent implements OnInit, OnDestroy {
     this.api.findDoctors({ sessionId: sid, specialty, ...locPart }).subscribe({
       next: (res) => {
         this.doctorsLoading = false;
+        this.doctorsSearched = true;
         this.doctors = res.doctors || [];
         this.affiliateDoctors = res.affiliateDoctors || [];
         this.affiliateOffer = res.affiliateOffer || null;
-        if (this.doctors.length === 0 && this.affiliateDoctors.length === 0) {
-          this.state.addMessage({
-            role: 'assistant',
-            text: res.error || 'I could not find doctors there. Try another area.',
-          });
+        // No verified match for the requested specialty (covers zero results and
+        // "results but none match"): tell the user in chat and offer to look
+        // elsewhere via the "Search another area" button.
+        const hasMatch = this.doctors.some((d) => d.matchesSpecialty);
+        if (!hasMatch && this.affiliateDoctors.length === 0) {
+          const spec = this.selectedSpecialty || 'a specialist';
+          const place = this.lastSearchPlace || 'that area';
+          const text = this.doctors.length
+            ? `I couldn't find a verified ${spec} in ${place}. I've listed nearby clinics below — or I can look in another city/area. Tap "Search another area" to try somewhere else.`
+            : res.error ||
+              `I couldn't find a ${spec} in ${place}. Want me to look in another city/area? Tap "Search another area" below.`;
+          this.state.addMessage({ role: 'assistant', text });
         }
         this.scrollSoon();
       },
