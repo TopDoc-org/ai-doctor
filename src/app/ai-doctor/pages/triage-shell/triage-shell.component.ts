@@ -502,8 +502,12 @@ export class TriageShellComponent implements OnInit, OnDestroy {
       }
       case 'find_doctor':
         say(res.message);
-        this.state.suggestedSpecialty =
-          res.suggestedSpecialty || this.state.suggestedSpecialty;
+        if (res.suggestedSpecialty) {
+          this.state.suggestedSpecialty = res.suggestedSpecialty;
+          // An explicit "find me a <specialty>" request drives the search even
+          // when it differs from the report's suggested specialist.
+          this.state.selectedSpecialty = res.suggestedSpecialty;
+        }
         this.connectDoctor();
         break;
       case 'refusal':
@@ -795,20 +799,40 @@ export class TriageShellComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Top pick = highest rating, then most reviews. Returns the recommended doctor.
+  // Top pick = verified specialty match first, then highest rating, then most
+  // reviews. Prefers a true specialist over a higher-rated other-specialty clinic.
   get recommendedDoctor(): Doctor | null {
     if (!this.doctors || !this.doctors.length) return null;
     return [...this.doctors].sort(
       (a, b) =>
+        Number(b.matchesSpecialty) - Number(a.matchesSpecialty) ||
         (b.rating || 0) - (a.rating || 0) ||
         (b.userRatingsTotal || 0) - (a.userRatingsTotal || 0)
     )[0];
   }
 
+  // The doctor we actively feature in the green "recommended" hero — ONLY a
+  // verified specialty match. When the area has no real match (e.g. no Urologist
+  // in a small town), we don't elevate an unrelated clinic as "recommended";
+  // the template falls back to a plain list + a "no verified specialist" notice.
+  get featuredDoctor(): Doctor | null {
+    const rec = this.recommendedDoctor;
+    return rec && rec.matchesSpecialty ? rec : null;
+  }
+
+  // Any result actually matches the requested specialty?
+  get hasSpecialtyMatch(): boolean {
+    return (this.doctors || []).some((d) => d.matchesSpecialty);
+  }
+
   // Why the recommended doctor is a good fit (template — no extra LLM cost).
+  // Only claim a specialty match when the backend verified it; otherwise stay
+  // honest (we can't confirm the specialty from the listing alone).
   recommendReason(d: Doctor): string {
     const spec = this.selectedSpecialty || 'your concern';
-    const bits = [`Matches the suggested specialist for you (${spec})`];
+    const bits = d.matchesSpecialty
+      ? [`Matches the suggested specialist for you (${spec})`]
+      : [`Nearby clinic — confirm they handle ${spec} before booking`];
     if (d.rating) {
       bits.push(
         `highest rated nearby — ${d.rating}★${d.userRatingsTotal ? ' (' + d.userRatingsTotal + ' reviews)' : ''}`
@@ -852,10 +876,14 @@ export class TriageShellComponent implements OnInit, OnDestroy {
     return this.specialists.length > 1;
   }
 
-  // The specialty every CTA / doctor search uses: the user's pick, else primary.
+  // The specialty every CTA / doctor search uses: the user's explicit pick (chip
+  // tap or a typed "find me a <specialty>" request), else the primary suggested
+  // specialist. An explicit pick is honored even when it's not in the report's
+  // list — a new/updated report resets the pick to null (see report handler), so
+  // a stale off-list selection can't leak across consults.
   get selectedSpecialty(): string | null {
     const sel = this.state.selectedSpecialty;
-    if (sel && this.specialists.some((s) => s.specialty === sel)) return sel;
+    if (sel) return sel;
     return this.specialists[0]?.specialty || null;
   }
 

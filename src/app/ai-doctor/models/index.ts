@@ -82,6 +82,9 @@ export interface Doctor {
   openNow?: boolean | null;
   placeId?: string;
   mapsUrl?: string;
+  // True only when the result's name/category actually reflects the requested
+  // specialty (set by the backend). Used to avoid claiming a false "match".
+  matchesSpecialty?: boolean;
   // Affiliate (partner clinic) fields — present only on partner matches.
   isPartner?: boolean;
   clinicId?: string;
