@@ -1,11 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { CountryService } from '../ai-doctor/services/country.service';
+import { LEGAL_CONFIG } from './legal-config';
 
 @Component({
   selector: 'app-terms',
   template: `
-    <app-legal-layout title="Terms of Use" updated="To be confirmed" [appName]="appName">
+    <app-legal-layout title="Terms of Use" [updated]="legal.lastUpdated" [appName]="appName">
       <p>
         These Terms of Use ("Terms") govern your use of {{ appName }} (the "Service").
         By using the Service you agree to these Terms. If you do not agree, do not use
@@ -36,9 +37,13 @@ import { CountryService } from '../ai-doctor/services/country.service';
       </p>
 
       <h2>4. Not for emergencies</h2>
-      <p>
+      <p *ngIf="countryName">
         Do not use the Service for medical emergencies. Call {{ emergencyNumbers.all }} or
         {{ emergencyNumbers.ambulance }} immediately in an emergency.
+      </p>
+      <p *ngIf="!countryName">
+        Do not use the Service for medical emergencies. Call your local emergency
+        number immediately in an emergency.
       </p>
 
       <h2>5. Doctor listings are third-party data</h2>
@@ -80,9 +85,10 @@ import { CountryService } from '../ai-doctor/services/country.service';
       <h2>10. Governing law &amp; grievances</h2>
       <p>
         These Terms are governed by the laws of India, subject to the jurisdiction of
-        the courts at <strong>[place — to be confirmed]</strong>. For grievances,
-        contact our Grievance Officer at
-        <strong>[grievance officer name &amp; email — to be confirmed]</strong>.
+        the courts at <strong>{{ legal.jurisdictionCity }}</strong>. For grievances,
+        contact our Grievance Officer
+        <strong>{{ legal.grievanceOfficerName }}</strong> at
+        <strong>{{ legal.grievanceOfficerEmail }}</strong>.
       </p>
 
       <p class="mt-6 text-xs text-teal-900/50">
@@ -95,6 +101,7 @@ import { CountryService } from '../ai-doctor/services/country.service';
 })
 export class TermsComponent implements OnInit {
   appName = environment.appName;
+  legal = LEGAL_CONFIG;
   emergencyNumbers = environment.emergencyNumbers;
   countryName: string | null = null;
 

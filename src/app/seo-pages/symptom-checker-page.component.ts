@@ -31,7 +31,7 @@ import { SeoService, SITE_URL } from '../core/seo.service';
         <li>A sense of urgency: manage at home, see a doctor soon, or seek urgent care.</li>
         <li>The right specialist for your concern — see <a routerLink="/which-specialist-to-see">which specialist to see</a>.</li>
         <li>A clear, shareable summary for your next consultation.</li>
-        <li>Help finding trusted doctors near you when you're ready.</li>
+        <li>Help finding doctors near you when you're ready.</li>
       </ul>
 
       <h2>Safety and limits</h2>

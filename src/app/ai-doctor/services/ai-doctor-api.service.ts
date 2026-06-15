@@ -137,6 +137,24 @@ export class AiDoctorApiService {
     );
   }
 
+  // Report feedback — anonymous, tied to the session (fire-and-forget like captureLead).
+  submitFeedback(
+    sessionId: string,
+    rating: number,
+    suggestions?: string,
+    userId?: string | null
+  ): Observable<{ ok: boolean; feedback?: any; message?: string }> {
+    return this.http.post<{ ok: boolean; feedback?: any; message?: string }>(
+      `${this.base}/feedback`,
+      {
+        sessionId,
+        rating,
+        suggestions: suggestions || undefined,
+        userId: userId || undefined,
+      }
+    );
+  }
+
   // --- PIN auth (TopDoc /user) ---
   numCheck(mobile: string): Observable<NumCheckResponse> {
     return this.http.post<NumCheckResponse>(`${this.userBase}/numCheck`, { mobile });

@@ -7,9 +7,11 @@
    Loaded via <link> in index.html with preconnect — avoids the render-blocking CSS @import chain. */
 
 :root {
-  --font-heading: 'Outfit', sans-serif;
-  --font-body: 'DM Sans', sans-serif;
-  --font-display: 'Fraunces', Georgia, serif;
+  /* Noto Sans Devanagari: fallback for Hindi text (chat is multilingual);
+     Latin fonts list first, so it only kicks in for Devanagari glyphs. */
+  --font-heading: 'Outfit', 'Noto Sans Devanagari', sans-serif;
+  --font-body: 'DM Sans', 'Noto Sans Devanagari', sans-serif;
+  --font-display: 'Fraunces', 'Noto Sans Devanagari', Georgia, serif;
 
   --color-teal-900: #0A332F;
   --color-teal-700: #0F766E;

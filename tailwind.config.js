@@ -4,10 +4,12 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        heading: ["Outfit", "sans-serif"],
-        body: ["DM Sans", "sans-serif"],
-        display: ["Fraunces", "Georgia", "serif"], // serif hero (Doctronic-style)
-        grotesk: ["Space Grotesk", "sans-serif"], // bold display for the consoles
+        // "Noto Sans Devanagari" covers Hindi glyphs (chat is multilingual);
+        // listed after the Latin font so it only applies to Devanagari.
+        heading: ["Outfit", "Noto Sans Devanagari", "sans-serif"],
+        body: ["DM Sans", "Noto Sans Devanagari", "sans-serif"],
+        display: ["Fraunces", "Noto Sans Devanagari", "Georgia", "serif"], // serif hero (Doctronic-style)
+        grotesk: ["Space Grotesk", "Noto Sans Devanagari", "sans-serif"], // bold display for the consoles
       },
       colors: {
         teal: {

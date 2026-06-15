@@ -58,7 +58,10 @@ import { SeoService, SITE_URL } from '../core/seo.service';
       </details>
       <details>
         <summary>What languages does it support?</summary>
-        <p>DoctoGuide currently works in English and is available worldwide.</p>
+        <p>
+          Any language you're comfortable with — English, Hindi, Hinglish, and more. Type the
+          way you talk and the AI replies in the same language. Available worldwide.
+        </p>
       </details>
     </app-seo-page-layout>
   `,
@@ -100,7 +103,7 @@ export class HealthGuidePageComponent implements OnInit, OnDestroy {
           name: 'What languages does DoctoGuide support?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'DoctoGuide currently works in English and is available worldwide.',
+            text: "Any language you're comfortable with — English, Hindi, Hinglish, and more. Type the way you talk and the AI replies in the same language. Available worldwide.",
           },
         },
       ],
