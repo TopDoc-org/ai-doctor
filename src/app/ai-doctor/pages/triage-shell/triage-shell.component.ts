@@ -110,6 +110,10 @@ export class TriageShellComponent implements OnInit, OnDestroy {
   askCity = false;
   city = '';
   locError = '';
+  // Last place we searched (for the "not found here — try another area" offer).
+  lastSearchPlace = '';
+  // True once a doctor search has returned (gates the "Search another area" CTA).
+  doctorsSearched = false;
 
   // auth gate + consult history
   showAuth = false;
@@ -502,8 +506,12 @@ export class TriageShellComponent implements OnInit, OnDestroy {
       }
       case 'find_doctor':
         say(res.message);
-        this.state.suggestedSpecialty =
-          res.suggestedSpecialty || this.state.suggestedSpecialty;
+        if (res.suggestedSpecialty) {
+          this.state.suggestedSpecialty = res.suggestedSpecialty;
+          // An explicit "find me a <specialty>" request drives the search even
+          // when it differs from the report's suggested specialist.
+          this.state.selectedSpecialty = res.suggestedSpecialty;
+        }
         this.connectDoctor();
         break;
       case 'refusal':
@@ -759,7 +767,17 @@ export class TriageShellComponent implements OnInit, OnDestroy {
       return;
     }
     this.askCity = false;
+    this.lastSearchPlace = loc.city || loc.district || 'your area';
     this.fetchDoctors({ lat: loc.lat, lng: loc.lng });
+  }
+
+  // Re-run the same-specialty search in a different place when nothing matched
+  // here. Reuses the existing location modal + submitCity/useMyLocation flow;
+  // selectedSpecialty persists, so only the location changes.
+  searchAnotherArea(): void {
+    this.city = '';
+    this.locError = '';
+    this.askCity = true;
   }
 
   submitCity(): void {
@@ -767,6 +785,7 @@ export class TriageShellComponent implements OnInit, OnDestroy {
     if (!c) return;
     this.askCity = false;
     this.doctorsLoading = true;
+    this.lastSearchPlace = c;
     this.fetchDoctors({ city: c });
   }
 
@@ -777,14 +796,22 @@ export class TriageShellComponent implements OnInit, OnDestroy {
     this.api.findDoctors({ sessionId: sid, specialty, ...locPart }).subscribe({
       next: (res) => {
         this.doctorsLoading = false;
+        this.doctorsSearched = true;
         this.doctors = res.doctors || [];
         this.affiliateDoctors = res.affiliateDoctors || [];
         this.affiliateOffer = res.affiliateOffer || null;
-        if (this.doctors.length === 0 && this.affiliateDoctors.length === 0) {
-          this.state.addMessage({
-            role: 'assistant',
-            text: res.error || 'I could not find doctors there. Try another area.',
-          });
+        // No verified match for the requested specialty (covers zero results and
+        // "results but none match"): tell the user in chat and offer to look
+        // elsewhere via the "Search another area" button.
+        const hasMatch = this.doctors.some((d) => d.matchesSpecialty);
+        if (!hasMatch && this.affiliateDoctors.length === 0) {
+          const spec = this.selectedSpecialty || 'a specialist';
+          const place = this.lastSearchPlace || 'that area';
+          const text = this.doctors.length
+            ? `I couldn't find a verified ${spec} in ${place}. I've listed nearby clinics below — or I can look in another city/area. Tap "Search another area" to try somewhere else.`
+            : res.error ||
+              `I couldn't find a ${spec} in ${place}. Want me to look in another city/area? Tap "Search another area" below.`;
+          this.state.addMessage({ role: 'assistant', text });
         }
         this.scrollSoon();
       },
@@ -795,20 +822,40 @@ export class TriageShellComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Top pick = highest rating, then most reviews. Returns the recommended doctor.
+  // Top pick = verified specialty match first, then highest rating, then most
+  // reviews. Prefers a true specialist over a higher-rated other-specialty clinic.
   get recommendedDoctor(): Doctor | null {
     if (!this.doctors || !this.doctors.length) return null;
     return [...this.doctors].sort(
       (a, b) =>
+        Number(b.matchesSpecialty) - Number(a.matchesSpecialty) ||
         (b.rating || 0) - (a.rating || 0) ||
         (b.userRatingsTotal || 0) - (a.userRatingsTotal || 0)
     )[0];
   }
 
+  // The doctor we actively feature in the green "recommended" hero — ONLY a
+  // verified specialty match. When the area has no real match (e.g. no Urologist
+  // in a small town), we don't elevate an unrelated clinic as "recommended";
+  // the template falls back to a plain list + a "no verified specialist" notice.
+  get featuredDoctor(): Doctor | null {
+    const rec = this.recommendedDoctor;
+    return rec && rec.matchesSpecialty ? rec : null;
+  }
+
+  // Any result actually matches the requested specialty?
+  get hasSpecialtyMatch(): boolean {
+    return (this.doctors || []).some((d) => d.matchesSpecialty);
+  }
+
   // Why the recommended doctor is a good fit (template — no extra LLM cost).
+  // Only claim a specialty match when the backend verified it; otherwise stay
+  // honest (we can't confirm the specialty from the listing alone).
   recommendReason(d: Doctor): string {
     const spec = this.selectedSpecialty || 'your concern';
-    const bits = [`Matches the suggested specialist for you (${spec})`];
+    const bits = d.matchesSpecialty
+      ? [`Matches the suggested specialist for you (${spec})`]
+      : [`Nearby clinic — confirm they handle ${spec} before booking`];
     if (d.rating) {
       bits.push(
         `highest rated nearby — ${d.rating}★${d.userRatingsTotal ? ' (' + d.userRatingsTotal + ' reviews)' : ''}`
@@ -852,10 +899,14 @@ export class TriageShellComponent implements OnInit, OnDestroy {
     return this.specialists.length > 1;
   }
 
-  // The specialty every CTA / doctor search uses: the user's pick, else primary.
+  // The specialty every CTA / doctor search uses: the user's explicit pick (chip
+  // tap or a typed "find me a <specialty>" request), else the primary suggested
+  // specialist. An explicit pick is honored even when it's not in the report's
+  // list — a new/updated report resets the pick to null (see report handler), so
+  // a stale off-list selection can't leak across consults.
   get selectedSpecialty(): string | null {
     const sel = this.state.selectedSpecialty;
-    if (sel && this.specialists.some((s) => s.specialty === sel)) return sel;
+    if (sel) return sel;
     return this.specialists[0]?.specialty || null;
   }
 
