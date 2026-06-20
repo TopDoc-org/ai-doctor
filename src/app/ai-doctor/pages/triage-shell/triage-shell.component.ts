@@ -59,6 +59,14 @@ export class TriageShellComponent implements OnInit, OnDestroy {
   loading = false;
   emergency = false;
 
+  // First-line spam guard. Backend owns the authoritative semantic low-signal
+  // detection (see BACKEND_SPAM_GUARD.md); this only short-circuits OBVIOUS junk
+  // (gibberish, repeated messages) so we don't burn a backend round-trip and
+  // never advance toward a report on it. Deliberately conservative to avoid
+  // blocking real Hinglish answers — anything subtle is left to the backend.
+  private junkStreak = 0;
+  private readonly JUNK_STREAK_LIMIT = 2;
+
   // triage progress toward the report
   progress = 0;
   stepsLeft = 0;
@@ -410,12 +418,67 @@ export class TriageShellComponent implements OnInit, OnDestroy {
   private send(text: string): void {
     this.state.addMessage({ role: 'user', text });
     this.scrollSoon();
+    // Obvious junk gets a nudge, not a backend round-trip. Only blocks once the
+    // junk streak hits the limit (a single odd message still goes through);
+    // a real message resets the streak. Never runs once a report/emergency
+    // exists. Semantic low-signal (jokes, deflections in Hinglish) is the
+    // backend's job — see BACKEND_SPAM_GUARD.md.
+    if (!this.report && !this.emergency && this.isLowSignal(text)) {
+      if (++this.junkStreak >= this.JUNK_STREAK_LIMIT) {
+        this.nudgeRealQuery();
+        return;
+      }
+    } else {
+      this.junkStreak = 0;
+    }
     if (!this.state.consented) {
       this.pendingText = text;
       this.showConsent = true;
       return;
     }
     this.dispatch(text);
+  }
+
+  // Cheap, conservative "is this obvious junk?" check. Catches exact repeats of
+  // a recent user message and keyboard-mash gibberish — NOT short valid answers
+  // like "no"/"nahi" (those are real triage answers). Anything semantic is left
+  // to the backend classifier.
+  private isLowSignal(text: string): boolean {
+    const t = text.trim().toLowerCase();
+    if (t.length < 2) return true;
+    // Exact repeat of a recent user turn (e.g. pasting the same line again).
+    const repeated = this.messages
+      .filter((m) => m.role === 'user')
+      .slice(-5, -1)
+      .some((m) => m.text.trim().toLowerCase() === t);
+    if (repeated) return true;
+    // Every token is gibberish -> treat as junk. A single real word saves it.
+    return t.split(/\s+/).every((w) => this.looksGibberish(w));
+  }
+
+  // Keyboard-mash heuristic. Only fires on longer tokens so short Hinglish
+  // words (nahi, bhai, kyun) are never flagged.
+  private looksGibberish(token: string): boolean {
+    const w = token.replace(/[^a-z]/gi, '').toLowerCase();
+    if (w.length < 6) return false; // too short to judge — let it through
+    if (/(.)\1{3,}/.test(w)) return true; // 4+ of the same char: aaaaa, hhhh
+    if (/^(asdf|qwer|zxcv|hjkl|jkl)/.test(w)) return true; // home-row runs
+    const vowels = (w.match(/[aeiou]/g) || []).length;
+    return vowels / w.length < 0.15; // almost no vowels: consonant mash
+  }
+
+  // Stop the junk loop and ask for a real concern (mirrors the app's bilingual
+  // tone). Resets the streak so a genuine reply afterwards proceeds normally.
+  private nudgeRealQuery(): void {
+    this.junkStreak = 0;
+    this.state.addMessage({
+      role: 'assistant',
+      text:
+        "I want to help, but I need a real health concern to go on — a symptom, " +
+        "pain, or worry. Tell me what's physically bothering you and I'll take it " +
+        'from there. (Aap apni takleef Hindi/Hinglish me bhi bata sakte hain.)',
+    });
+    this.scrollSoon();
   }
 
   agreeConsent(): void {
@@ -720,6 +783,7 @@ export class TriageShellComponent implements OnInit, OnDestroy {
     this.consultFor = null;
     this.editingDetails = false;
     this.reportPending = false;
+    this.junkStreak = 0;
     this.rehydrate(() => this.scrollSoon());
   }
 
@@ -978,6 +1042,7 @@ export class TriageShellComponent implements OnInit, OnDestroy {
     this.progress = 0;
     this.stepsLeft = 0;
     this.reportPending = false;
+    this.junkStreak = 0;
     // Fresh start in place (no new session yet — created on the first message).
     this.state.addMessage({ role: 'assistant', text: this.WELCOME });
     this.scrollSoon();
