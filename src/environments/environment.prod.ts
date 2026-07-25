@@ -8,5 +8,13 @@ export const environment = {
   adminBase: '/admin', // global super-admin console (cross-clinic)
   ownerBase: '/owner', // creator console (app-wide, owners only)
   emergencyNumbers: { all: '112', ambulance: '112' },
-  gaMeasurementId: 'G-XKGDL4WS32',
+  firebaseConfig: {
+    apiKey: 'AIzaSyAv9k9_NriTCecvSmDX5RirInV2aMvPmlY',
+    authDomain: 'doctoguide-a36c9.firebaseapp.com',
+    projectId: 'doctoguide-a36c9',
+    storageBucket: 'doctoguide-a36c9.firebasestorage.app',
+    messagingSenderId: '75571510567',
+    appId: '1:75571510567:web:96182ea8905d3eac32bd02',
+    measurementId: 'G-EK0REP2Q0P',
+  },
 };

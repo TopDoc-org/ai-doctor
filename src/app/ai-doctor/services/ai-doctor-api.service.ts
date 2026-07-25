@@ -89,7 +89,7 @@ export class AiDoctorApiService {
   sendMessage(
     sessionId: string,
     text: string,
-    opts?: { amend?: boolean }
+    opts?: { amend?: boolean; overrideEmergency?: boolean }
   ): Observable<MessageResponse> {
     return this.http.post<MessageResponse>(`${this.base}/message`, {
       sessionId,
@@ -97,6 +97,10 @@ export class AiDoctorApiService {
       // Post-report amend: tells the backend to re-open the interview and
       // regenerate the report with the added/corrected details.
       amend: opts?.amend || undefined,
+      // User acknowledged the emergency advice and chose to keep going: the
+      // backend should skip the emergency classifier and continue the
+      // interview toward a report instead of re-flagging every turn.
+      overrideEmergency: opts?.overrideEmergency || undefined,
     });
   }
 

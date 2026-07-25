@@ -3,7 +3,7 @@ import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { SeoData, SeoService } from './core/seo.service';
-import { AnalyticsService } from './core/analytics.service';
+import { FirebaseAnalyticsService } from './core/firebase-analytics.service';
 import { AffiliateService } from './ai-doctor/services/affiliate.service';
 
 @Component({
@@ -19,7 +19,7 @@ export class AppComponent implements OnInit, OnDestroy {
     private router: Router,
     private route: ActivatedRoute,
     private seo: SeoService,
-    private analytics: AnalyticsService,
+    private firebaseAnalytics: FirebaseAnalyticsService,
     private affiliate: AffiliateService,
   ) {}
 
@@ -27,7 +27,7 @@ export class AppComponent implements OnInit, OnDestroy {
     // Capture campaign attribution (?ref=clinicId) on the first load before
     // any internal navigation strips the query string.
     this.affiliate.capture();
-    this.analytics.init();
+    this.firebaseAnalytics.init();
     this.sub = this.router.events
       .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
       .subscribe(() => {
