@@ -145,7 +145,10 @@ export class SeoPageLayoutComponent {
     { path: '/ai-doctor', label: 'AI Doctor' },
     { path: '/symptom-checker', label: 'Symptom Checker' },
     { path: '/which-specialist-to-see', label: 'Which Specialist to See' },
+    { path: '/find-doctors', label: 'Find a Doctor Near You' },
     { path: '/health-guide', label: 'Online Health Guide' },
+    { path: '/how-it-works', label: 'How It Works' },
+    { path: '/pricing', label: 'Pricing' },
     { path: '/emergency-numbers', label: 'Emergency Numbers by Country' },
   ];
 }

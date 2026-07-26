@@ -5,4 +5,4 @@ Disallow: /partner
 Disallow: /admin
 Disallow: /owner
 
-Sitemap: https://www.knocdoc.in/sitemap.xml
+Sitemap: https://doctoguide.knocdoc.in/sitemap.xml
