@@ -30,6 +30,7 @@
     "@capacitor/geolocation": "^6.1.1",
     "@nguniversal/express-engine": "^14.2.0",
     "express": "^4.15.2",
+    "firebase": "^12.16.0",
     "headroom-ai": "^0.22.4",
     "jspdf": "^4.2.1",
     "primeicons": "^6.0.1",

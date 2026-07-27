@@ -4,7 +4,7 @@ import { Meta, Title } from '@angular/platform-browser';
 import { CountryService } from '../ai-doctor/services/country.service';
 
 /** Canonical site origin (production frontend). Update if the domain changes. */
-export const SITE_URL = 'https://www.knocdoc.in';
+export const SITE_URL = 'https://doctoguide.knocdoc.in';
 
 /**
  * Placeholder for the user's country in SEO strings (route `data.seo` + DEFAULTS).

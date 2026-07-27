@@ -165,7 +165,10 @@
               "/symptom-checker",
               "/which-specialist-to-see",
               "/health-guide",
-              "/emergency-numbers"
+              "/emergency-numbers",
+              "/how-it-works",
+              "/find-doctors",
+              "/pricing"
             ]
           },
           "configurations": {

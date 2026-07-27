@@ -1,55 +1,73 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://www.knocdoc.in/</loc>
+    <loc>https://doctoguide.knocdoc.in/</loc>
     <lastmod>2026-06-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://www.knocdoc.in/ai-doctor</loc>
+    <loc>https://doctoguide.knocdoc.in/ai-doctor</loc>
     <lastmod>2026-06-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.knocdoc.in/symptom-checker</loc>
+    <loc>https://doctoguide.knocdoc.in/symptom-checker</loc>
     <lastmod>2026-06-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.knocdoc.in/which-specialist-to-see</loc>
+    <loc>https://doctoguide.knocdoc.in/which-specialist-to-see</loc>
     <lastmod>2026-06-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.knocdoc.in/health-guide</loc>
+    <loc>https://doctoguide.knocdoc.in/health-guide</loc>
     <lastmod>2026-06-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.knocdoc.in/emergency-numbers</loc>
+    <loc>https://doctoguide.knocdoc.in/emergency-numbers</loc>
     <lastmod>2026-06-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.knocdoc.in/disclaimer</loc>
+    <loc>https://doctoguide.knocdoc.in/how-it-works</loc>
+    <lastmod>2026-07-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://doctoguide.knocdoc.in/find-doctors</loc>
+    <lastmod>2026-07-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://doctoguide.knocdoc.in/pricing</loc>
+    <lastmod>2026-07-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://doctoguide.knocdoc.in/disclaimer</loc>
     <lastmod>2026-06-04</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.4</priority>
   </url>
   <url>
-    <loc>https://www.knocdoc.in/privacy</loc>
+    <loc>https://doctoguide.knocdoc.in/privacy</loc>
     <lastmod>2026-06-04</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://www.knocdoc.in/terms</loc>
+    <loc>https://doctoguide.knocdoc.in/terms</loc>
     <lastmod>2026-06-04</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>

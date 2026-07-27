@@ -37,7 +37,7 @@ export class TriageShellComponent implements OnInit, OnDestroy {
   // Greeting doubles as the multilingual hint: the AI mirrors the user's
   // language (backend behaviour), so show it rather than just claim it.
   private readonly WELCOME =
-    "Hi! I'm your AI health guide. Tell me what's bothering you — in any language you like: English, हिन्दी, Hinglish…";
+    "Hi! I'm your AI health guide. Tell me what's bothering you — in any language you like";
 
   // Composer placeholder cycles through languages to demonstrate that the
   // user can reply in whichever one they're comfortable with.
@@ -58,6 +58,10 @@ export class TriageShellComponent implements OnInit, OnDestroy {
   input = '';
   loading = false;
   emergency = false;
+  // Set when the user dismisses the emergency card to keep building their
+  // report. Once on, backend emergency replies are shown as plain advice and
+  // never re-lock the composer.
+  emergencyOverride = false;
 
   // First-line spam guard. Backend owns the authoritative semantic low-signal
   // detection (see BACKEND_SPAM_GUARD.md); this only short-circuits OBVIOUS junk
@@ -447,10 +451,15 @@ export class TriageShellComponent implements OnInit, OnDestroy {
     const t = text.trim().toLowerCase();
     if (t.length < 2) return true;
     // Exact repeat of a recent user turn (e.g. pasting the same line again).
-    const repeated = this.messages
-      .filter((m) => m.role === 'user')
-      .slice(-5, -1)
-      .some((m) => m.text.trim().toLowerCase() === t);
+    // Length-gated: short identical answers like "no"/"yes"/"nahi"/"4" are
+    // legitimate replies to DIFFERENT triage questions, not re-pasted junk —
+    // only flag substantial repeats so a denial streak never blocks the report.
+    const repeated =
+      t.length >= 12 &&
+      this.messages
+        .filter((m) => m.role === 'user')
+        .slice(-5, -1)
+        .some((m) => m.text.trim().toLowerCase() === t);
     if (repeated) return true;
     // Every token is gibberish -> treat as junk. A single real word saves it.
     return t.split(/\s+/).every((w) => this.looksGibberish(w));
@@ -508,10 +517,35 @@ export class TriageShellComponent implements OnInit, OnDestroy {
     setTimeout(() => this.composer?.nativeElement?.focus(), 100);
   }
 
+  // Escape hatch from the emergency card: dismiss it and re-open the interview
+  // so the user can keep answering and still get a report. The urgent-care
+  // advice stays in the transcript; further emergency replies won't re-lock.
+  continueWithReport(): void {
+    if (!this.emergency) return;
+    this.emergency = false;
+    this.emergencyOverride = true;
+    // Record the user's decision in the transcript so the chat reads naturally.
+    this.state.addMessage({
+      role: 'user',
+      text: "I understand the risk — please continue and create my report.",
+    });
+    this.state.addMessage({
+      role: 'assistant',
+      text: "Understood — I'll prepare your report. If your symptoms get worse, please seek urgent care right away. First, a couple more quick questions so your report is accurate — what else can you tell me?",
+    });
+    this.scrollSoon();
+    setTimeout(() => this.composer?.nativeElement?.focus(), 100);
+  }
+
   private dispatchToSession(text: string): void {
     const sid = this.state.sessionId!;
     this.loading = true;
-    this.api.sendMessage(sid, text, { amend: this.amending }).subscribe({
+    this.api
+      .sendMessage(sid, text, {
+        amend: this.amending,
+        overrideEmergency: this.emergencyOverride,
+      })
+      .subscribe({
       next: (res) => {
         this.loading = false;
         this.handleResponse(res);
@@ -535,6 +569,10 @@ export class TriageShellComponent implements OnInit, OnDestroy {
 
     switch (res.type) {
       case 'emergency':
+        // Once the user has chosen to keep going, don't re-lock the composer or
+        // repeat the urgent-care warning every turn. (The backend should honor
+        // overrideEmergency and return questions/report instead of re-flagging.)
+        if (this.emergencyOverride) break;
         this.emergency = true;
         say(res.message);
         break;
@@ -1020,6 +1058,7 @@ export class TriageShellComponent implements OnInit, OnDestroy {
   restart(): void {
     this.state.reset();
     this.emergency = false;
+    this.emergencyOverride = false;
     this.report = null;
     this.amending = false;
     this.feedbackRating = 0;

@@ -9,6 +9,9 @@ import { SymptomCheckerPageComponent } from './seo-pages/symptom-checker-page.co
 import { WhichSpecialistPageComponent } from './seo-pages/which-specialist-page.component';
 import { HealthGuidePageComponent } from './seo-pages/health-guide-page.component';
 import { EmergencyNumbersPageComponent } from './seo-pages/emergency-numbers-page.component';
+import { HowItWorksPageComponent } from './seo-pages/how-it-works-page.component';
+import { FindDoctorsPageComponent } from './seo-pages/find-doctors-page.component';
+import { PricingPageComponent } from './seo-pages/pricing-page.component';
 
 const routes: Routes = [
   {
@@ -108,6 +111,39 @@ const routes: Routes = [
         title: 'Emergency Numbers by Country — Ambulance & Police | DoctoGuide',
         description:
           'Official emergency and ambulance phone numbers for over 190 countries, on one free page. Bookmark before you travel. DoctoGuide by KnocDoc.',
+      },
+    },
+  },
+  {
+    path: 'how-it-works',
+    component: HowItWorksPageComponent,
+    data: {
+      seo: {
+        title: 'How DoctoGuide Works — Symptoms to Specialist in 3 Steps | DoctoGuide',
+        description:
+          'See exactly how DoctoGuide works: describe your symptoms, answer a few follow-ups, and get guidance, urgency, and the right specialist — free, no sign-up.',
+      },
+    },
+  },
+  {
+    path: 'find-doctors',
+    component: FindDoctorsPageComponent,
+    data: {
+      seo: {
+        title: 'Find a Doctor Near You — Matched to Your Symptoms | DoctoGuide',
+        description:
+          'Find doctors near you, matched to the specialist you actually need. Free doctor search from DoctoGuide, built for India. No sign-up, no listing fees.',
+      },
+    },
+  },
+  {
+    path: 'pricing',
+    component: PricingPageComponent,
+    data: {
+      seo: {
+        title: 'DoctoGuide Pricing — Free, Always | DoctoGuide',
+        description:
+          'DoctoGuide is completely free: unlimited AI symptom checker, AI doctor, specialist matching, and doctor search. No subscription, no card, no hidden tier.',
       },
     },
   },
