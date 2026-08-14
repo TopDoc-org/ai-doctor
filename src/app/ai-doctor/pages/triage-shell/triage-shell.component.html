@@ -131,6 +131,30 @@
         </div>
       </div>
 
+      <!-- tap-to-answer chips for the current question. Backend only sends these
+           when every option is a complete answer, so tapping never costs the
+           report any detail. The composer stays open regardless — the hint says
+           so. Hidden while the age/sex card is up so the two never stack. -->
+      <div
+        *ngIf="answerOptions.length && !loading && !needAgeSex && !consultComplete && !emergency"
+        class="animate-fade-up"
+        role="group"
+        aria-label="Answer choices"
+      >
+        <div class="flex flex-wrap gap-2">
+          <button
+            *ngFor="let opt of answerOptions"
+            type="button"
+            (click)="pickOption(opt)"
+            [disabled]="loading"
+            class="rounded-full border border-black/10 bg-white px-4 py-2 text-sm text-teal-900/80 hover:border-teal-600 hover:bg-teal-50 hover:text-teal-900 disabled:opacity-50"
+          >
+            {{ opt }}
+          </button>
+        </div>
+        <p class="mt-2 text-xs text-teal-900/60">or type your own answer below</p>
+      </div>
+
       <!-- typing / thinking indicator (normal chat turns) -->
       <div *ngIf="loading && !generatingReport" class="flex justify-start">
         <div class="flex items-center gap-1.5 rounded-2xl rounded-bl-sm bg-white px-4 py-3 ring-1 ring-black/5">
@@ -249,7 +273,51 @@
           </button>
         </div>
 
+        <!-- 1. Urgency first: the most important thing must be visible immediately,
+             with wording driven by the triage level rather than the differential. -->
+        <div *ngIf="report.urgency as urg"
+             class="mt-3 flex items-start gap-2 rounded-xl p-3"
+             [ngClass]="{
+               'bg-red-50 ring-1 ring-red-200': urg.level === 'emergency',
+               'bg-amber-50 ring-1 ring-amber-200': urg.level === 'urgent',
+               'bg-teal-50 ring-1 ring-teal-200': urg.level === 'routine'
+             }">
+          <span class="material-icons"
+                [ngClass]="{
+                  'text-red-600': urg.level === 'emergency',
+                  'text-amber-600': urg.level === 'urgent',
+                  'text-teal-600': urg.level === 'routine'
+                }" style="font-size:20px">
+            {{ urg.level === 'routine' ? 'event_available' : 'priority_high' }}
+          </span>
+          <div>
+            <p class="font-heading font-semibold"
+               [ngClass]="{
+                 'text-red-800': urg.level === 'emergency',
+                 'text-amber-800': urg.level === 'urgent',
+                 'text-teal-900': urg.level === 'routine'
+               }">{{ urgencyHeadline }}</p>
+            <p class="mt-0.5 text-sm text-teal-900/75">{{ urg.reason }}</p>
+          </div>
+        </div>
+
         <p class="mt-3 text-[15px] text-teal-900/80">{{ report.summary }}</p>
+
+        <!-- 3. Why we're being cautious -->
+        <div *ngIf="report.whyConcerned" class="mt-3 rounded-xl border-l-2 border-teal-300 bg-teal-50/60 py-2 pl-3">
+          <p class="font-heading text-sm font-semibold text-teal-900">Why we're being cautious</p>
+          <p class="mt-1 text-sm text-teal-900/80">{{ report.whyConcerned }}</p>
+        </div>
+
+        <!-- 4. What you've told us — only what the patient actually said -->
+        <div *ngIf="report.whatYouToldUs?.length" class="mt-3">
+          <p class="font-heading text-sm font-semibold text-teal-900">What you've told us</p>
+          <ul class="mt-1 space-y-1">
+            <li *ngFor="let b of report.whatYouToldUs" class="flex gap-2 text-sm text-teal-900/80">
+              <span class="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-teal-400"></span>{{ b }}
+            </li>
+          </ul>
+        </div>
         <p class="mt-2 text-sm italic text-teal-900/60">A doctor can give you personalised guidance — and peace of mind.</p>
 
         <!-- continue to a licensed doctor -->
@@ -271,7 +339,7 @@
             </li>
           </ul>
           <button (click)="connectDoctor()" class="mt-3 w-full rounded-xl bg-teal-600 px-4 py-3 text-sm font-semibold text-white hover:bg-teal-700">
-            Connect with {{ specialistLabel }} →
+            {{ urgencyCta }} →
           </button>
         </div>
 
@@ -358,21 +426,33 @@
           </div>
         </div>
 
+        <!-- 7. Information that could change the assessment -->
+        <div *ngIf="report.missingInfo?.length" class="mt-3 rounded-xl bg-black/[0.02] p-3">
+          <p class="font-heading text-sm font-semibold text-teal-900">Information that could change the assessment</p>
+          <p class="mt-0.5 text-xs text-teal-900/55">Not assessed through chat — a clinician would check these.</p>
+          <ul class="mt-2 space-y-1">
+            <li *ngFor="let m of report.missingInfo" class="flex gap-2 text-sm text-teal-900/75">
+              <span class="material-icons text-teal-900/30" style="font-size:14px">remove</span>{{ m }}
+            </li>
+          </ul>
+        </div>
+
         <!-- AI confidence accordion (collapsed by default; absent on older reports) -->
         <ng-container *ngIf="report.confidence as conf">
           <button (click)="reportOpen.confidence = !reportOpen.confidence" class="mt-3 flex w-full items-center justify-between border-t border-black/5 pt-3 text-left">
-            <span class="font-heading font-semibold text-teal-900">AI confidence</span>
+            <span class="font-heading font-semibold text-teal-900">Assessment completeness</span>
             <span class="flex items-center gap-2">
               <span class="rounded-full px-2.5 py-0.5 text-xs font-bold"
                     [ngClass]="{
                       'bg-red-100 text-red-700': conf.level === 'low',
                       'bg-amber-100 text-amber-700': conf.level === 'moderate',
                       'bg-teal-100 text-teal-700': conf.level === 'high'
-                    }">{{ conf.score }}/100 · {{ conf.level }}</span>
+                    }">{{ completenessLabel }}</span>
               <span class="material-icons text-teal-600">{{ reportOpen.confidence ? 'expand_less' : 'expand_more' }}</span>
             </span>
           </button>
           <div *ngIf="reportOpen.confidence" class="mt-2">
+            <p class="mb-2 text-xs text-teal-900/60">This reflects how much information was available during the conversation. It is not the probability that a diagnosis is correct.</p>
             <div class="h-1.5 w-full overflow-hidden rounded-full bg-black/5">
               <div class="h-full rounded-full"
                    [ngClass]="{
@@ -440,7 +520,7 @@
           <p class="font-heading font-bold text-teal-900">This is not a diagnosis</p>
           <p class="mt-1 text-sm text-teal-900/70">These are possibilities to discuss with a doctor. A licensed {{ selectedSpecialty || report.suggestedSpecialty }} can examine you, discuss your symptoms, and advise the right next steps for you.</p>
           <button (click)="connectDoctor()" class="mt-3 w-full rounded-xl bg-teal-600 px-4 py-3 text-sm font-bold text-white hover:bg-teal-700">
-            Consult {{ specialistLabel }} now →
+            {{ urgencyCta }} →
           </button>
         </div>
 
@@ -466,6 +546,26 @@
               <span class="material-icons" style="font-size:18px">check_circle</span> Thanks for helping us improve.
             </p>
           </ng-template>
+        </div>
+
+        <!-- Growth ask: deliberately quiet, and placed after the report and the
+             feedback prompt so it never competes with the health information. -->
+        <div class="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-black/5 pt-4 text-sm text-teal-900/60">
+          <span>We're a small team. Following us helps more people find us.</span>
+          <a
+            [href]="instagramUrl"
+            target="_blank"
+            rel="noopener"
+            (click)="trackInstagramFollow()"
+            class="inline-flex items-center gap-1.5 font-medium text-teal-700 hover:text-teal-800 hover:underline"
+          >
+            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+              <rect x="3" y="3" width="18" height="18" rx="5" />
+              <circle cx="12" cy="12" r="4" />
+              <circle cx="17.2" cy="6.8" r="1" fill="currentColor" stroke="none" />
+            </svg>
+            {{ instagramHandle }}
+          </a>
         </div>
       </div>
 

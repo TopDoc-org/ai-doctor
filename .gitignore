@@ -48,3 +48,6 @@ Thumbs.db
 
 # Video production project (assets, renders, Remotion)
 /video-production
+
+# Brag/launch video output (renders + composition)
+/brag-output

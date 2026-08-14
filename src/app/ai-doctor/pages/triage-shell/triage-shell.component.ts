@@ -23,6 +23,7 @@ import {
   SpecialtySuggestion,
 } from '../../models';
 import { ReportPdfService } from '../../services/report-pdf.service';
+import { FirebaseAnalyticsService } from '../../../core/firebase-analytics.service';
 
 @Component({
   selector: 'app-triage-shell',
@@ -54,6 +55,8 @@ export class TriageShellComponent implements OnInit, OnDestroy {
   emergencyNumbers = environment.emergencyNumbers;
   countryName: string | null = null;
   appName = environment.appName;
+  instagramUrl = environment.instagram.url;
+  instagramHandle = environment.instagram.handle;
 
   input = '';
   loading = false;
@@ -70,6 +73,11 @@ export class TriageShellComponent implements OnInit, OnDestroy {
   // blocking real Hinglish answers — anything subtle is left to the backend.
   private junkStreak = 0;
   private readonly JUNK_STREAK_LIMIT = 2;
+
+  // Tap-to-answer chips for the current question (backend-supplied). Empty for
+  // open/numeric/detail-bearing questions, which stay free-text. The composer
+  // stays enabled either way — the chips are a shortcut, never a cage.
+  answerOptions: string[] = [];
 
   // triage progress toward the report
   progress = 0;
@@ -146,8 +154,15 @@ export class TriageShellComponent implements OnInit, OnDestroy {
     private geo: GeolocationService,
     private country: CountryService,
     private pdf: ReportPdfService,
+    private analytics: FirebaseAnalyticsService,
     @Inject(PLATFORM_ID) private platformId: object
   ) {}
+
+  /** The post-report follow ask is the only growth surface in the consult, so
+   *  it is worth knowing whether anyone actually taps it. */
+  trackInstagramFollow(): void {
+    this.analytics.logAnalyticsEvent('instagram_follow_click', { source: 'report' });
+  }
 
   get messages(): ChatMessage[] {
     return this.state.messages;
@@ -275,6 +290,11 @@ export class TriageShellComponent implements OnInit, OnDestroy {
           this.ageSexDone = true;
         }
         if (s.sex === 'male' || s.sex === 'female') this.sex = s.sex;
+        // Only if the interview is still waiting on an answer — a trailing user
+        // message means the reply is already in flight or was sent.
+        const lastMsg = this.messages[this.messages.length - 1];
+        this.answerOptions =
+          !s.report && lastMsg?.role === 'assistant' ? s.lastOptions || [] : [];
         if (this.report) this.scrollReportToTop();
         else this.scrollSoon();
         done();
@@ -420,6 +440,7 @@ export class TriageShellComponent implements OnInit, OnDestroy {
   // Adds the user bubble, then gates on consent before hitting the backend.
   // Session is created lazily inside dispatch() on the first real message.
   private send(text: string): void {
+    this.answerOptions = [];
     this.state.addMessage({ role: 'user', text });
     this.scrollSoon();
     // Obvious junk gets a nudge, not a backend round-trip. Only blocks once the
@@ -441,6 +462,15 @@ export class TriageShellComponent implements OnInit, OnDestroy {
       return;
     }
     this.dispatch(text);
+  }
+
+  // Tapping an answer chip sends it as the patient's reply, exactly as if they
+  // had typed it — so slot extraction and the report see the same thing either
+  // way.
+  pickOption(option: string): void {
+    if (this.loading || this.emergency) return;
+    this.answerOptions = [];
+    this.send(option);
   }
 
   // Cheap, conservative "is this obvious junk?" check. Catches exact repeats of
@@ -507,6 +537,7 @@ export class TriageShellComponent implements OnInit, OnDestroy {
   // Re-open the chat after the report so the user can add or correct details;
   // the backend re-runs the interview on the new info and regenerates the report.
   startAmend(): void {
+    this.answerOptions = [];
     if (!this.report || this.emergency) return;
     this.amending = true;
     this.state.addMessage({
@@ -567,6 +598,10 @@ export class TriageShellComponent implements OnInit, OnDestroy {
     const say = (t?: string) =>
       t && this.state.addMessage({ role: 'assistant', text: t, intent: res.intent });
 
+    // Stale chips must never outlive their question — the question case below
+    // is the only thing that puts them back.
+    this.answerOptions = [];
+
     switch (res.type) {
       case 'emergency':
         // Once the user has chosen to keep going, don't re-lock the composer or
@@ -595,6 +630,7 @@ export class TriageShellComponent implements OnInit, OnDestroy {
         break;
       case 'question': {
         say(res.message || res.question);
+        this.answerOptions = res.options || [];
         // During an amend round the report already exists — keep the progress
         // bar at 100 instead of replaying interview progress.
         if (!this.amending) {
@@ -1039,11 +1075,57 @@ export class TriageShellComponent implements OnInit, OnDestroy {
   // The specialist recommended by the report, with the right article — used to
   // personalise the "connect with a doctor" surfaces ("an Orthopedist", "a
   // Neurologist"). Falls back to the generic wording when no report yet.
+  // A few enum entries name a SERVICE, not a person, so the article reads wrong
+  // ("an Emergency Medicine"). Those get a hand-written phrase instead.
+  private readonly SPECIALIST_PHRASES: Record<string, string> = {
+    'Emergency Medicine': 'emergency care',
+  };
+
   get specialistLabel(): string {
     const s = this.selectedSpecialty;
     if (!s) return 'a licensed doctor';
+    const phrase = this.SPECIALIST_PHRASES[s];
+    if (phrase) return phrase; // already reads correctly without an article
     // "u" excluded: U-initial specialties (Urologist) start with a "yoo" sound.
     return `${/^[aeio]/i.test(s) ? 'an' : 'a'} ${s}`;
+  }
+
+  // The call to action must match the triage level, not the scariest diagnosis
+  // in the differential: an undifferentiated acute case is "seek emergency care
+  // now", not "connect with a Cardiologist".
+  private readonly CTA_BY_URGENCY: Record<string, string> = {
+    emergency: 'Seek emergency care now',
+    urgent: 'Find urgent medical care',
+    routine: 'Talk to a doctor',
+    self_care: 'Monitor your symptoms',
+  };
+
+  // Headline wording is chosen by the triage level, never written freehand, so
+  // "emergency" language can only appear when the engine actually said emergency.
+  private readonly URGENCY_HEADLINES: Record<string, string> = {
+    emergency: 'Emergency medical evaluation is recommended now',
+    urgent: 'Urgent medical evaluation is recommended',
+    routine: 'A routine consultation with a doctor is recommended',
+  };
+
+  get urgencyHeadline(): string {
+    const level = this.report?.urgency?.level;
+    return (level && this.URGENCY_HEADLINES[level]) || 'A doctor should review your symptoms';
+  }
+
+  get urgencyCta(): string {
+    const level = this.report?.urgency?.level;
+    return (level && this.CTA_BY_URGENCY[level]) || `Connect with ${this.specialistLabel}`;
+  }
+
+  // "AI confidence 65/100" reads as "65% chance this diagnosis is right", which
+  // is not what it measures. It reflects how much was established in the chat.
+  get completenessLabel(): string {
+    const level = this.report?.confidence?.level;
+    if (level === 'high') return 'Good';
+    if (level === 'moderate') return 'Moderate';
+    if (level === 'low') return 'Limited';
+    return '';
   }
 
   // Split a SOAP field into readable bullet lines.
@@ -1056,6 +1138,7 @@ export class TriageShellComponent implements OnInit, OnDestroy {
   }
 
   restart(): void {
+    this.answerOptions = [];
     this.state.reset();
     this.emergency = false;
     this.emergencyOverride = false;

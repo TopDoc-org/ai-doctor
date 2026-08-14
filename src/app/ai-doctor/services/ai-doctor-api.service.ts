@@ -15,6 +15,9 @@ export interface SessionState {
   sex: string | null;
   hasLead: boolean;
   triageState?: any;
+  // Answer chips for the last question asked, so a refresh mid-interview does
+  // not silently downgrade the patient to typing.
+  lastOptions?: string[] | null;
   suggestedSpecialty?: string | null;
   suggestedSpecialties?: SpecialtySuggestion[] | null;
 }

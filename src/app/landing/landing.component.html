@@ -12,7 +12,8 @@
 
   <!-- nav -->
   <!-- z-30: avatar dropdown overflows below the nav and must paint above <main> (z-10) -->
-  <nav class="relative z-30 mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-5 sm:px-6">
+  <header>
+  <nav aria-label="Primary" class="relative z-30 mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-5 sm:px-6">
     <div class="flex min-w-0 shrink flex-col leading-tight">
       <div class="flex items-center gap-1 truncate font-heading text-xl font-extrabold text-teal-900 sm:text-2xl">
         <span class="truncate">{{ appName }}</span>
@@ -24,9 +25,9 @@
       </span>
     </div>
     <div class="hidden items-center gap-8 font-body text-[15px] text-teal-900 md:flex">
-      <a class="hover:text-teal-600">Find Doctors</a>
-      <a class="hover:text-teal-600">How it works</a>
-      <a class="hover:text-teal-600">Pricing</a>
+      <a routerLink="/find-doctors" class="hover:text-teal-600">Find Doctors</a>
+      <a routerLink="/how-it-works" class="hover:text-teal-600">How it works</a>
+      <a routerLink="/pricing" class="hover:text-teal-600">Pricing</a>
     </div>
     <div class="flex shrink-0 items-center gap-2 sm:gap-3">
       <ng-container *ngIf="!isLoggedIn; else loggedInNav">
@@ -69,20 +70,21 @@
       </ng-template>
     </div>
   </nav>
+  </header>
 
   <!-- hero -->
   <!-- flex-col + order-* so MOBILE shows the entry box right under the headline
        (visible without scrolling); md+ restores the original visual order. -->
   <main class="relative z-10 mx-auto flex max-w-4xl flex-col px-6 pt-5 text-center md:pt-7">
     <h1 class="order-1 font-display text-[2rem] leading-[1.1] text-teal-900 sm:text-5xl md:text-6xl">
-      <span class="italic">Health</span> answers, <br class="hidden md:block" />
-      <span class="italic">always</span> within reach.
-      <!-- Crawlable, keyword-bearing context for search engines (visually hidden). -->
-      <span class="sr-only">
-        Free AI doctor and symptom checker for {{ countryForCopy }} — instant AI health guidance,
-        the right specialist to see, and doctors near you.
-      </span>
+      {{ appName }} — <span class="italic">AI health guide</span> <br class="hidden md:block" />
+      &amp; symptom checker
     </h1>
+    <!-- Brand tagline. Kept as its own line rather than inside the H1 so the H1
+         carries the brand and the primary keywords on their own. -->
+    <p class="order-1 mx-auto mt-3 font-display text-lg italic text-teal-900/60 sm:text-xl">
+      Health answers, always within reach.
+    </p>
     <!-- rotating hero text (carousel, text-only, branding) -->
     <!-- Supporting/marketing text — sits BELOW the primary input on every breakpoint
          (the input is the hero per AI-landing pattern). Soft card so the auto-rotating
@@ -159,6 +161,13 @@
       </p>
     </div>
 
+    <!-- Hero subhead. Visible (not sr-only) so the page's target keywords sit in real
+         copy rather than hidden text. order-2 keeps it below the entry box on mobile. -->
+    <p class="order-2 mx-auto mt-5 max-w-2xl text-base leading-relaxed text-teal-900/75 sm:text-lg">
+      A free AI doctor and symptom checker for {{ countryForCopy }} — describe how you feel and get
+      instant AI health guidance, the right specialist to see, and doctors near you.
+    </p>
+
     <!-- trust chips -->
     <div class="order-5 mt-8 flex flex-wrap items-center justify-center gap-3">
       <span
@@ -173,7 +182,7 @@
     <!-- SEO content + FAQ (crawlable, keyword-rich, native <details> needs no JS) -->
     <section class="order-6 mx-auto mt-16 max-w-2xl text-left">
       <h2 class="font-heading text-2xl font-bold text-teal-900">
-        {{ countryPossessive }} free AI doctor &amp; symptom checker
+        What is {{ appName }}?
       </h2>
       <p class="mt-3 font-body text-[15px] leading-relaxed text-teal-900/70">
         {{ appName }} by KnocDoc is a free AI health assistant built for {{ countryForCopy }}. Describe your
@@ -181,8 +190,70 @@
         be going on, which specialist to see, and when to seek urgent care. When you're ready,
         find doctors near you. No sign-up, no credit card, ready in seconds.
       </p>
+      <p class="mt-3 font-body text-[15px] leading-relaxed text-teal-900/70">
+        It is a health-<em>information</em> assistant, not a physician. It does not diagnose,
+        prescribe, or treat — it helps you understand what you are feeling and get to the right
+        care faster. <a routerLink="/about" class="text-teal-700 underline">More about {{ appName }} and KnocDoc</a>.
+      </p>
 
-      <h3 class="mt-10 font-heading text-xl font-bold text-teal-900">Frequently asked questions</h3>
+      <h2 class="mt-10 font-heading text-2xl font-bold text-teal-900">
+        How {{ appName }} works
+      </h2>
+      <ol class="mt-3 list-decimal space-y-2 pl-5 font-body text-[15px] leading-relaxed text-teal-900/70">
+        <li><strong class="text-teal-900">Describe your symptoms</strong> in your own words — English, हिन्दी, Hinglish, or another language.</li>
+        <li><strong class="text-teal-900">Answer a few follow-up questions</strong>, the kind a clinician would ask before pointing you anywhere.</li>
+        <li><strong class="text-teal-900">Understand possible explanations</strong> in plain language, without a wall of worst-case search results.</li>
+        <li><strong class="text-teal-900">Understand how urgent it might be</strong> — whether this needs attention now, soon, or routinely.</li>
+        <li><strong class="text-teal-900">Decide what to do next</strong>, with the right speciality named and a summary you can carry to the consultation.</li>
+      </ol>
+      <p class="mt-3 font-body text-[15px] leading-relaxed text-teal-900/70">
+        <a routerLink="/how-it-works" class="text-teal-700 underline">See how it works in detail</a>.
+      </p>
+
+      <h2 class="mt-10 font-heading text-2xl font-bold text-teal-900">
+        What {{ appName }} can help with
+      </h2>
+      <ul class="mt-3 list-disc space-y-2 pl-5 font-body text-[15px] leading-relaxed text-teal-900/70">
+        <li>Making sense of <a routerLink="/symptom-checker" class="text-teal-700 underline">symptoms you can't quite describe</a>.</li>
+        <li>General health questions you'd otherwise type into a search engine.</li>
+        <li>Getting a sense of <strong class="text-teal-900">how urgent</strong> something might be.</li>
+        <li>Preparing for a consultation, with a clear written summary to bring along.</li>
+        <li>Working out <a routerLink="/which-specialist-to-see" class="text-teal-700 underline">which specialist to see</a> so a first appointment isn't wasted.</li>
+        <li>Understanding a lab report or a medicine label in plain language.</li>
+        <li>Reading up on <a routerLink="/health-topics" class="text-teal-700 underline">common symptoms</a> like headache, fever, cough, and stomach pain.</li>
+      </ul>
+
+      <h2 class="mt-10 font-heading text-2xl font-bold text-teal-900">
+        When you should seek medical care
+      </h2>
+      <p class="mt-3 font-body text-[15px] leading-relaxed text-teal-900/70">
+        Do not use a website — this one included — to decide whether an emergency is an emergency.
+        Get help immediately for chest pain or pressure, difficulty breathing, sudden weakness or
+        numbness on one side, drooping face or sudden trouble speaking, a seizure, confusion or
+        unresponsiveness, heavy bleeding that won't stop, a severe allergic reaction, or thoughts of
+        harming yourself. In an emergency{{ inCountry }}, call {{ emergencyNumbers.all }} or {{ emergencyNumbers.ambulance }}.
+      </p>
+      <p class="mt-3 font-body text-[15px] leading-relaxed text-teal-900/70">
+        Anything sudden, severe, or rapidly worsening needs medical attention regardless of what any
+        tool says. See <a routerLink="/medical-safety" class="text-teal-700 underline">medical safety</a>
+        for the full list, or <a routerLink="/emergency-numbers" class="text-teal-700 underline">emergency numbers by country</a>.
+      </p>
+
+      <h2 class="mt-10 font-heading text-2xl font-bold text-teal-900">
+        {{ appName }} is not a replacement for a doctor
+      </h2>
+      <p class="mt-3 font-body text-[15px] leading-relaxed text-teal-900/70">
+        {{ appName }} cannot examine you, order tests, diagnose a condition, prescribe or adjust
+        medication, or treat anything. It has no access to your history beyond what you type, and
+        like any AI it can state something incorrect in confident-sounding language. A reassuring
+        answer is not clearance.
+      </p>
+      <p class="mt-3 font-body text-[15px] leading-relaxed text-teal-900/70">
+        Use it to arrive at a consultation better prepared — not instead of one. If you are choosing
+        between reading this and seeing a doctor, see the doctor.
+      </p>
+
+      <h2 class="mt-10 font-heading text-2xl font-bold text-teal-900">Frequently asked questions</h2>
       <div class="mt-4 space-y-3">
         <details class="group rounded-2xl border border-teal-200 bg-white/70 p-4">
           <summary class="cursor-pointer font-heading text-base font-semibold text-teal-900">
@@ -250,11 +321,46 @@
 
     <!-- legal footer -->
     <footer class="order-8 mx-auto mt-10 max-w-2xl border-t border-black/5 pt-4 text-center text-xs text-teal-900/50">
+      <a
+        [href]="instagramUrl"
+        target="_blank"
+        rel="noopener"
+        class="mb-3 inline-flex items-center gap-1.5 text-teal-900/70 hover:text-teal-700"
+        aria-label="Follow KnocDoc Health on Instagram"
+      >
+        <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+          <rect x="3" y="3" width="18" height="18" rx="5" />
+          <circle cx="12" cy="12" r="4" />
+          <circle cx="17.2" cy="6.8" r="1" fill="currentColor" stroke="none" />
+        </svg>
+        <span>{{ instagramHandle }}</span>
+      </a>
+      <!-- Internal links to the SEO landing pages. The homepage is the highest-authority
+           page on the site; without these the eight pages are only reachable via sitemap.xml. -->
+      <nav aria-label="More from DoctoGuide" class="mb-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5">
+        <a routerLink="/ai-doctor" class="hover:text-teal-700">AI Doctor</a>
+        <span aria-hidden="true">·</span>
+        <a routerLink="/symptom-checker" class="hover:text-teal-700">Symptom Checker</a>
+        <span aria-hidden="true">·</span>
+        <a routerLink="/which-specialist-to-see" class="hover:text-teal-700">Which Specialist to See</a>
+        <span aria-hidden="true">·</span>
+        <a routerLink="/health-guide" class="hover:text-teal-700">Health Guide</a>
+        <span aria-hidden="true">·</span>
+        <a routerLink="/emergency-numbers" class="hover:text-teal-700">Emergency Numbers</a>
+        <span aria-hidden="true">·</span>
+        <a routerLink="/how-it-works" class="hover:text-teal-700">How It Works</a>
+        <span aria-hidden="true">·</span>
+        <a routerLink="/find-doctors" class="hover:text-teal-700">Find Doctors</a>
+        <span aria-hidden="true">·</span>
+        <a routerLink="/pricing" class="hover:text-teal-700">Pricing</a>
+      </nav>
+      <div>
       <a routerLink="/privacy" class="hover:text-teal-700">Privacy Policy</a>
       <span class="mx-2">·</span>
       <a routerLink="/terms" class="hover:text-teal-700">Terms of Use</a>
       <span class="mx-2">·</span>
       <a routerLink="/disclaimer" class="hover:text-teal-700">Medical Disclaimer</a>
+      </div>
     </footer>
   </main>
 </div>
