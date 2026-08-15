@@ -66,71 +66,9 @@ import { environment } from '../../environments/environment';
       </main>
     </div>
   `,
-  styles: [
-    `
-      .seo-prose h2 {
-        font-family: var(--font-heading);
-        font-weight: 700;
-        font-size: 1.25rem;
-        color: #134e4a;
-        margin-top: 2rem;
-        margin-bottom: 0.5rem;
-      }
-      .seo-prose h3 {
-        font-family: var(--font-heading);
-        font-weight: 600;
-        font-size: 1.05rem;
-        color: #134e4a;
-        margin-top: 1.25rem;
-        margin-bottom: 0.3rem;
-      }
-      .seo-prose p { margin-bottom: 0.8rem; }
-      .seo-prose ul {
-        list-style: disc;
-        padding-left: 1.25rem;
-        margin-bottom: 0.8rem;
-      }
-      .seo-prose ol {
-        list-style: decimal;
-        padding-left: 1.25rem;
-        margin-bottom: 0.8rem;
-      }
-      .seo-prose li { margin-bottom: 0.35rem; }
-      .seo-prose a { color: #0d9488; text-decoration: underline; }
-      .seo-prose strong { color: #134e4a; }
-      .seo-prose table {
-        width: 100%;
-        border-collapse: collapse;
-        margin: 0.8rem 0 1.2rem;
-        font-size: 0.9rem;
-      }
-      .seo-prose th, .seo-prose td {
-        border: 1px solid rgba(13, 148, 136, 0.25);
-        padding: 0.5rem 0.75rem;
-        text-align: left;
-        vertical-align: top;
-      }
-      .seo-prose th {
-        background: rgba(13, 148, 136, 0.08);
-        font-weight: 600;
-        color: #134e4a;
-      }
-      .seo-prose details {
-        border: 1px solid rgba(13, 148, 136, 0.25);
-        border-radius: 1rem;
-        background: rgba(255, 255, 255, 0.7);
-        padding: 1rem;
-        margin-bottom: 0.75rem;
-      }
-      .seo-prose summary {
-        cursor: pointer;
-        font-family: var(--font-heading);
-        font-weight: 600;
-        color: #134e4a;
-      }
-      .seo-prose details p { margin: 0.5rem 0 0; }
-    `,
-  ],
+  // Prose styles for the projected content live in src/styles.scss, not here.
+  // <ng-content> nodes carry the parent component's _ngcontent attribute, so
+  // emulated-encapsulation rules written in this component never match them.
 })
 export class SeoPageLayoutComponent {
   appName = environment.appName;
@@ -145,10 +83,14 @@ export class SeoPageLayoutComponent {
     { path: '/ai-doctor', label: 'AI Doctor' },
     { path: '/symptom-checker', label: 'Symptom Checker' },
     { path: '/which-specialist-to-see', label: 'Which Specialist to See' },
+    { path: '/health-topics', label: 'Health Topics' },
     { path: '/find-doctors', label: 'Find a Doctor Near You' },
     { path: '/health-guide', label: 'Online Health Guide' },
     { path: '/how-it-works', label: 'How It Works' },
+    { path: '/medical-safety', label: 'Medical Safety' },
+    { path: '/about', label: 'About DoctoGuide' },
     { path: '/pricing', label: 'Pricing' },
     { path: '/emergency-numbers', label: 'Emergency Numbers by Country' },
+    { path: '/contact', label: 'Contact' },
   ];
 }

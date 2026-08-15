@@ -12,6 +12,28 @@ import { EmergencyNumbersPageComponent } from './seo-pages/emergency-numbers-pag
 import { HowItWorksPageComponent } from './seo-pages/how-it-works-page.component';
 import { FindDoctorsPageComponent } from './seo-pages/find-doctors-page.component';
 import { PricingPageComponent } from './seo-pages/pricing-page.component';
+import { AboutPageComponent } from './seo-pages/about-page.component';
+import { MedicalSafetyPageComponent } from './seo-pages/medical-safety-page.component';
+import { ContactPageComponent } from './seo-pages/contact-page.component';
+import { HealthTopicsIndexComponent } from './seo-pages/health-topics-index.component';
+import { HealthTopicPageComponent } from './seo-pages/health-topic-page.component';
+import { NotFoundComponent } from './seo-pages/not-found.component';
+import { HEALTH_TOPICS } from './seo-pages/health-topics.data';
+
+/**
+ * One route per health topic, generated from the hand-written content list.
+ * Static `data.seo` per route keeps SeoService as the single place metadata is
+ * applied, and gives the prerenderer concrete URLs to walk. `topicSlug` tells the
+ * shared component which entry to render.
+ */
+const healthTopicRoutes: Routes = HEALTH_TOPICS.map((topic) => ({
+  path: `health-topics/${topic.slug}`,
+  component: HealthTopicPageComponent,
+  data: {
+    topicSlug: topic.slug,
+    seo: { title: topic.title, description: topic.description },
+  },
+}));
 
 const routes: Routes = [
   {
@@ -19,10 +41,12 @@ const routes: Routes = [
     component: LandingComponent,
     data: {
       seo: {
-        // %COUNTRY% only in suffix positions — it collapses cleanly when unknown.
-        title: 'AI Doctor & Free Symptom Checker in %COUNTRY% | DoctoGuide by KnocDoc',
+        // Brand first: the primary objective is ranking for the term "DoctoGuide".
+        // No %COUNTRY% token here — the title is already at the 60-character limit,
+        // and a token that expands at runtime would push it past truncation.
+        title: 'DoctoGuide — AI Health Guide & Free Symptom Checker | KnocDoc',
         description:
-          'Free AI doctor & symptom checker. Describe your symptoms, get instant AI health guidance, learn which specialist to see, and find doctors near you in %COUNTRY%. No sign-up. DoctoGuide by KnocDoc.',
+          'DoctoGuide is a free AI health guide and symptom checker by KnocDoc. Describe your symptoms, understand possible explanations and urgency, and learn which specialist to see in %COUNTRY%. No sign-up.',
       },
     },
   },
@@ -64,7 +88,7 @@ const routes: Routes = [
     component: AiDoctorPageComponent,
     data: {
       seo: {
-        title: 'Free AI Doctor Online — Ask Health Questions Instantly | DoctoGuide',
+        title: 'Free AI Doctor Online — Ask Any Health Question | DoctoGuide',
         description:
           'Talk to a free AI doctor online. Describe your symptoms, get instant health guidance, and learn which specialist to see. No sign-up, no card. DoctoGuide by KnocDoc.',
       },
@@ -75,7 +99,7 @@ const routes: Routes = [
     component: SymptomCheckerPageComponent,
     data: {
       seo: {
-        title: 'Free AI Symptom Checker — Describe Symptoms, Get Guidance | DoctoGuide',
+        title: 'Free AI Symptom Checker — Instant Guidance | DoctoGuide',
         description:
           'Free AI symptom checker. Describe your symptoms in plain language and get instant guidance on what could be going on, how urgent it is, and which specialist to see.',
       },
@@ -86,7 +110,7 @@ const routes: Routes = [
     component: WhichSpecialistPageComponent,
     data: {
       seo: {
-        title: 'Which Specialist Should I See? Find the Right Doctor | DoctoGuide',
+        title: 'Which Specialist Should I See? | DoctoGuide',
         description:
           'Not sure which doctor to see? Match your symptoms to the right specialist with our free guide and AI assistant — avoid wasted consultations. DoctoGuide by KnocDoc.',
       },
@@ -97,7 +121,7 @@ const routes: Routes = [
     component: HealthGuidePageComponent,
     data: {
       seo: {
-        title: 'Free Online Health Guide — Symptoms, Reports & Medicines | DoctoGuide',
+        title: 'Free Online Health Guide — Symptoms & Reports | DoctoGuide',
         description:
           'Your free online health guide. Understand symptoms, decode lab reports, and make sense of medicines in plain language. Better than Googling. DoctoGuide by KnocDoc.',
       },
@@ -108,7 +132,7 @@ const routes: Routes = [
     component: EmergencyNumbersPageComponent,
     data: {
       seo: {
-        title: 'Emergency Numbers by Country — Ambulance & Police | DoctoGuide',
+        title: 'Emergency Numbers by Country | DoctoGuide',
         description:
           'Official emergency and ambulance phone numbers for over 190 countries, on one free page. Bookmark before you travel. DoctoGuide by KnocDoc.',
       },
@@ -119,7 +143,7 @@ const routes: Routes = [
     component: HowItWorksPageComponent,
     data: {
       seo: {
-        title: 'How DoctoGuide Works — Symptoms to Specialist in 3 Steps | DoctoGuide',
+        title: 'How DoctoGuide Works — Symptoms to Specialist | DoctoGuide',
         description:
           'See exactly how DoctoGuide works: describe your symptoms, answer a few follow-ups, and get guidance, urgency, and the right specialist — free, no sign-up.',
       },
@@ -130,7 +154,7 @@ const routes: Routes = [
     component: FindDoctorsPageComponent,
     data: {
       seo: {
-        title: 'Find a Doctor Near You — Matched to Your Symptoms | DoctoGuide',
+        title: 'Find a Doctor Near You | DoctoGuide by KnocDoc',
         description:
           'Find doctors near you, matched to the specialist you actually need. Free doctor search from DoctoGuide, built for India. No sign-up, no listing fees.',
       },
@@ -147,6 +171,51 @@ const routes: Routes = [
       },
     },
   },
+  {
+    path: 'about',
+    component: AboutPageComponent,
+    data: {
+      seo: {
+        title: 'About DoctoGuide — AI Health Guide by KnocDoc',
+        description:
+          'DoctoGuide is a free AI health guide and symptom checker built and operated by KnocDoc. What it does, why it exists, and what it deliberately will not do.',
+      },
+    },
+  },
+  {
+    path: 'medical-safety',
+    component: MedicalSafetyPageComponent,
+    data: {
+      seo: {
+        title: 'Medical Safety & AI Limitations | DoctoGuide',
+        description:
+          'What DoctoGuide can and cannot do, how AI health guidance can be wrong, the warning signs that need emergency care, and how to use a symptom checker safely.',
+      },
+    },
+  },
+  {
+    path: 'contact',
+    component: ContactPageComponent,
+    data: {
+      seo: {
+        title: 'Contact DoctoGuide by KnocDoc',
+        description:
+          'How to reach the team behind DoctoGuide, report a problem with the guidance, or ask about your data. Not a medical service — for emergencies call 112 or 108 in India.',
+      },
+    },
+  },
+  {
+    path: 'health-topics',
+    component: HealthTopicsIndexComponent,
+    data: {
+      seo: {
+        title: 'Health Topics — Symptom Guides | DoctoGuide',
+        description:
+          'Plain-language guides to common symptoms: what causes them, the warning signs that need urgent care, and which specialist treats them. Free from DoctoGuide by KnocDoc.',
+      },
+    },
+  },
+  ...healthTopicRoutes,
   {
     path: 'triage',
     loadChildren: () =>
@@ -175,7 +244,32 @@ const routes: Routes = [
     // Creator (platform-owner) console — keep out of the search index.
     data: { seo: { robots: 'noindex,nofollow' } },
   },
-  { path: '**', redirectTo: '' },
+  // Real 404 instead of the previous `redirectTo: ''`. Redirecting every unknown
+  // URL to the homepage returned HTTP 200 with duplicate homepage content for an
+  // unlimited URL space — a soft 404. `/404` is prerendered and copied to
+  // `404.html` at the output root so the host can serve it with a 404 status.
+  {
+    path: '404',
+    component: NotFoundComponent,
+    data: {
+      seo: {
+        title: 'Page Not Found | DoctoGuide',
+        description: 'This page does not exist. Browse DoctoGuide, the free AI health guide and symptom checker by KnocDoc.',
+        robots: 'noindex,follow',
+      },
+    },
+  },
+  {
+    path: '**',
+    component: NotFoundComponent,
+    data: {
+      seo: {
+        title: 'Page Not Found | DoctoGuide',
+        description: 'This page does not exist. Browse DoctoGuide, the free AI health guide and symptom checker by KnocDoc.',
+        robots: 'noindex,follow',
+      },
+    },
+  },
 ];
 
 @NgModule({

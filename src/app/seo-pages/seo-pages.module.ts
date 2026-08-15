@@ -11,6 +11,12 @@ import { EmergencyNumbersPageComponent } from './emergency-numbers-page.componen
 import { HowItWorksPageComponent } from './how-it-works-page.component';
 import { FindDoctorsPageComponent } from './find-doctors-page.component';
 import { PricingPageComponent } from './pricing-page.component';
+import { AboutPageComponent } from './about-page.component';
+import { MedicalSafetyPageComponent } from './medical-safety-page.component';
+import { ContactPageComponent } from './contact-page.component';
+import { HealthTopicsIndexComponent } from './health-topics-index.component';
+import { HealthTopicPageComponent } from './health-topic-page.component';
+import { NotFoundComponent } from './not-found.component';
 
 // Public SEO/content pages. Eagerly imported by AppModule — these routes are
 // prerendered, so their components must be available without lazy loading.
@@ -25,6 +31,12 @@ import { PricingPageComponent } from './pricing-page.component';
     HowItWorksPageComponent,
     FindDoctorsPageComponent,
     PricingPageComponent,
+    AboutPageComponent,
+    MedicalSafetyPageComponent,
+    ContactPageComponent,
+    HealthTopicsIndexComponent,
+    HealthTopicPageComponent,
+    NotFoundComponent,
   ],
   imports: [CommonModule, RouterModule],
   exports: [
@@ -36,6 +48,12 @@ import { PricingPageComponent } from './pricing-page.component';
     HowItWorksPageComponent,
     FindDoctorsPageComponent,
     PricingPageComponent,
+    AboutPageComponent,
+    MedicalSafetyPageComponent,
+    ContactPageComponent,
+    HealthTopicsIndexComponent,
+    HealthTopicPageComponent,
+    NotFoundComponent,
   ],
 })
 export class SeoPagesModule {}

@@ -3,8 +3,10 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve --port 4300",
-    "build": "ng build",
+    "start": "ng serve --port 4700",
+    "build": "ng run AIDoctorFront:prerender && node scripts/postbuild-seo.js",
+    "build:browser": "ng build",
+    "seo:check": "node scripts/seo-check.js",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "dev:ssr": "ng run AIDoctorFront:serve-ssr",

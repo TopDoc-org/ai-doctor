@@ -8,6 +8,8 @@ export const environment = {
   adminBase: '/admin', // global super-admin console (cross-clinic)
   ownerBase: '/owner', // creator console (app-wide, owners only)
   emergencyNumbers: { all: '112', ambulance: '112' },
+  // Social handle, shown in the landing footer and in the post-report follow ask.
+  instagram: { handle: '@knocdoc_health', url: 'https://www.instagram.com/knocdoc_health' },
   firebaseConfig: {
     apiKey: 'AIzaSyAv9k9_NriTCecvSmDX5RirInV2aMvPmlY',
     authDomain: 'doctoguide-a36c9.firebaseapp.com',

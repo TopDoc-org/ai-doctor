@@ -39,3 +39,74 @@ body {
 
 /* Material Icons (loaded via <link> in index.html) */
 .material-icons { vertical-align: middle; }
+
+/* ---------------------------------------------------------------------------
+   Prose styling for the public SEO/content pages.
+
+   These live here, not in seo-page-layout.component.ts, on purpose. That
+   component renders its body through <ng-content>, and with Angular's default
+   emulated encapsulation projected nodes carry the *parent* component's
+   _ngcontent attribute — so a `.seo-prose h2` rule scoped to the layout
+   component never matched any of the projected headings. Every heading, list,
+   and table on the eight existing SEO pages was rendering unstyled.
+   --------------------------------------------------------------------------- */
+.seo-prose {
+  h2 {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: #134e4a;
+    margin-top: 2rem;
+    margin-bottom: 0.5rem;
+  }
+  h3 {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 1.05rem;
+    color: #134e4a;
+    margin-top: 1.25rem;
+    margin-bottom: 0.3rem;
+  }
+  p { margin-bottom: 0.8rem; }
+  ul { list-style: disc; padding-left: 1.25rem; margin-bottom: 0.8rem; }
+  ol { list-style: decimal; padding-left: 1.25rem; margin-bottom: 0.8rem; }
+  li { margin-bottom: 0.35rem; }
+  a { color: #0d9488; text-decoration: underline; }
+  strong { color: #134e4a; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.8rem 0 1.2rem;
+    font-size: 0.9rem;
+  }
+  th, td {
+    border: 1px solid rgba(13, 148, 136, 0.25);
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: rgba(13, 148, 136, 0.08);
+    font-weight: 600;
+    color: #134e4a;
+  }
+
+  details {
+    border: 1px solid rgba(13, 148, 136, 0.25);
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.7);
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+  }
+  summary {
+    cursor: pointer;
+    font-family: var(--font-heading);
+    font-weight: 600;
+    color: #134e4a;
+  }
+  details p { margin: 0.5rem 0 0; }
+
+  /* Breadcrumb nav sits inside the prose slot but must not inherit list styling. */
+  nav[aria-label='Breadcrumb'] a { color: #0d9488; }
+}

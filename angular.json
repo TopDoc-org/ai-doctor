@@ -27,8 +27,8 @@
               "src/favicon.ico",
               "src/assets",
               { "glob": "robots.txt", "input": "src", "output": "/" },
-              { "glob": "sitemap.xml", "input": "src", "output": "/" },
-              { "glob": "manifest.webmanifest", "input": "src", "output": "/" }
+              { "glob": "manifest.webmanifest", "input": "src", "output": "/" },
+              { "glob": "google*.html", "input": "src", "output": "/" }
             ],
             "styles": [
               "node_modules/@angular/material/prebuilt-themes/indigo-pink.css",
@@ -168,7 +168,16 @@
               "/emergency-numbers",
               "/how-it-works",
               "/find-doctors",
-              "/pricing"
+              "/pricing",
+              "/about",
+              "/medical-safety",
+              "/contact",
+              "/health-topics",
+              "/health-topics/headache",
+              "/health-topics/fever",
+              "/health-topics/cough",
+              "/health-topics/stomach-pain",
+              "/404"
             ]
           },
           "configurations": {

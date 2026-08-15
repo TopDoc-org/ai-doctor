@@ -1,0 +1,40 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist/AIDoctorFront/browser",
+  "trailingSlash": false,
+
+  "//": "Only the interactive app routes fall back to the SPA shell. Everything public is prerendered to its own index.html and served straight off the filesystem, so a blanket /(.*) -> /index.html rewrite would shadow 404.html and re-create the soft-404 problem this build set out to fix.",
+  "rewrites": [
+    { "source": "/triage/:path*", "destination": "/index.html" },
+    { "source": "/partner/:path*", "destination": "/index.html" },
+    { "source": "/admin/:path*", "destination": "/index.html" },
+    { "source": "/owner/:path*", "destination": "/index.html" }
+  ],
+
+  "//redirects": "Keyword-variant URLs resolve to the single canonical page rather than becoming duplicate pages competing for the same query.",
+  "redirects": [
+    { "source": "/ai-symptom-checker", "destination": "/symptom-checker", "permanent": true },
+    { "source": "/ai-health-guide", "destination": "/health-guide", "permanent": true },
+    { "source": "/ai-doctor-online", "destination": "/ai-doctor", "permanent": true },
+    { "source": "/safety", "destination": "/medical-safety", "permanent": true }
+  ],
+
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+      ]
+    },
+    {
+      "source": "/(.*)\\.(js|css|woff2|png|jpg|jpeg|svg|ico|webp)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+    },
+    {
+      "source": "/sitemap.xml",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=3600" }]
+    }
+  ]
+}

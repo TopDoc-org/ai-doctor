@@ -59,6 +59,14 @@ export interface Report {
   // Ranked list; absent on reports generated before multi-specialist shipped.
   suggestedSpecialties?: SpecialtySuggestion[];
   confidence?: ConfidenceAssessment;
+  // Triage level, decided by the backend's deterministic engine (the model may
+  // raise it, never soften it). Drives the urgency banner and the primary CTA.
+  urgency?: { level: 'emergency' | 'urgent' | 'routine'; reason?: string };
+  // Patient-facing context, added in the V2 report. Optional — reports generated
+  // before this shipped simply don't render these sections.
+  whyConcerned?: string;
+  whatYouToldUs?: string[];
+  missingInfo?: string[];
   disclaimer?: string;
   generatedAt?: string;
 }
@@ -108,6 +116,10 @@ export interface MessageResponse {
     | 'find_doctor';
   message?: string;
   question?: string;
+  // Tap-to-answer chips for a `type: 'question'` turn. Present (possibly empty) only
+  // when the answer set is closed enough that tapping loses no detail — open,
+  // numeric and detail-bearing questions come back with [] and stay free-text.
+  options?: string[];
   report?: Report;
   emergencyNumbers?: { all: string; ambulance: string };
   sources?: any[];

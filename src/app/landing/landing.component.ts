@@ -17,6 +17,8 @@ export class LandingComponent implements OnInit, OnDestroy {
   placeholder = '';
   countryName: string | null = null;
   emergencyNumbers = environment.emergencyNumbers;
+  instagramUrl = environment.instagram.url;
+  instagramHandle = environment.instagram.handle;
 
   // Rotating hero slides (text-only carousel) — headline + supporting line.
   heroSlides = [
