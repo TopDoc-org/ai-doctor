@@ -1,8 +1,14 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { MessageResponse, DoctorsResponse, Report, SpecialtySuggestion } from '../models';
+import {
+  MessageResponse,
+  DoctorsResponse,
+  PlaceSuggestion,
+  Report,
+  SpecialtySuggestion,
+} from '../models';
 import { AiDoctorStateService } from './ai-doctor-state.service';
 import { AffiliateService } from './affiliate.service';
 
@@ -253,6 +259,19 @@ export class AiDoctorApiService {
       clinicId: payload.clinicId ?? this.affiliate.clinicId ?? undefined,
     };
     return this.http.post<DoctorsResponse>(`${this.base}/doctors`, body);
+  }
+
+  // City/area autocomplete for the "where should I look?" prompt. `countryCode`
+  // only biases the ranking server-side, so foreign cities stay reachable.
+  searchPlaces(
+    q: string,
+    countryCode?: string | null
+  ): Observable<{ places: PlaceSuggestion[] }> {
+    let params = new HttpParams().set('q', q);
+    if (countryCode) params = params.set('cc', countryCode);
+    return this.http.get<{ places: PlaceSuggestion[] }>(`${this.base}/places`, {
+      params,
+    });
   }
 
   // Returns the report PDF as a Blob (gated server-side by lead capture +

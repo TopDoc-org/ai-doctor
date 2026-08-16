@@ -3,6 +3,11 @@ module.exports = {
   content: ["./src/**/*.{html,ts}"],
   theme: {
     extend: {
+      screens: {
+        // Small-phone guard (iPhone SE / 360dp Android): below this, header
+        // actions drop their labels and keep only the icon.
+        xs: "400px",
+      },
       fontFamily: {
         // "Noto Sans Devanagari" covers Hindi glyphs (chat is multilingual);
         // listed after the Latin font so it only applies to Devanagari.

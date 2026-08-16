@@ -71,6 +71,18 @@ export interface Report {
   generatedAt?: string;
 }
 
+// One city/area suggestion for the doctor-location prompt. Carries the exact
+// point so a picked place never has to be geocoded from its name again.
+export interface PlaceSuggestion {
+  label: string;
+  city: string;
+  state?: string | null;
+  country?: string | null;
+  countryCode?: string | null;
+  lat: number;
+  lng: number;
+}
+
 // A discount/offer a partner clinic configured for the funnel.
 export interface PartnerOffer {
   title: string;

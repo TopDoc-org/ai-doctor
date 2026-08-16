@@ -569,186 +569,6 @@
         </div>
       </div>
 
-      <!-- doctor discovery loading skeletons -->
-      <div *ngIf="doctorsLoading" class="space-y-2">
-        <div class="flex items-center gap-2 text-sm text-teal-900/60">
-          <span class="material-icons animate-spin360 text-teal-500" style="font-size:18px">progress_activity</span>
-          Searching doctors near you…
-        </div>
-        <div *ngFor="let s of [1,2,3]" class="flex items-center gap-3 rounded-2xl bg-white p-4 ring-1 ring-black/5">
-          <div class="h-11 w-11 animate-pulse rounded-full bg-teal-100"></div>
-          <div class="flex-1 space-y-2">
-            <div class="h-3 w-1/2 animate-pulse rounded bg-teal-100"></div>
-            <div class="h-2.5 w-3/4 animate-pulse rounded bg-teal-50"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- affiliate-first: partner clinic(s) + offer -->
-      <div *ngIf="affiliateDoctors.length && !doctorsLoading" class="space-y-3">
-        <p class="flex items-center gap-1 font-heading font-semibold text-teal-900">
-          <span class="material-icons text-amber-500" style="font-size:18px">verified</span>
-          Partner clinic
-        </p>
-        <p class="text-xs text-teal-900/60">
-          Listings come from Google/OpenStreetMap. We don't verify or endorse practitioners — please check a doctor's registration before consulting.
-        </p>
-
-        <!-- clinic-wide offer banner -->
-        <div *ngIf="affiliateOffer" class="flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2.5">
-          <span class="material-icons text-amber-600" style="font-size:18px">local_offer</span>
-          <div class="min-w-0">
-            <p class="text-sm font-semibold text-amber-800">{{ affiliateOffer.title }}<span *ngIf="affiliateOffer.discountText"> — {{ affiliateOffer.discountText }}</span></p>
-            <p *ngIf="affiliateOffer.description" class="text-xs text-amber-700/80">{{ affiliateOffer.description }}</p>
-          </div>
-        </div>
-
-        <div *ngFor="let p of affiliateDoctors" class="rounded-2xl border-2 border-amber-400 bg-white p-4">
-          <div class="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-amber-600">
-            <span class="material-icons" style="font-size:15px">handshake</span> Partner clinic
-          </div>
-          <div class="mt-2 flex items-start gap-3">
-            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-base font-bold text-white"
-              [style.background]="avatarColor(p.name)">{{ initials(p.name) }}</div>
-            <div class="min-w-0 flex-1">
-              <div class="flex items-start justify-between gap-2">
-                <div class="min-w-0">
-                  <p class="font-heading font-bold text-teal-900">{{ p.name }}</p>
-                  <p *ngIf="p.clinicName" class="text-xs text-teal-900/60">{{ p.clinicName }}</p>
-                </div>
-                <div *ngIf="p.rating" class="flex shrink-0 items-center gap-1 text-sm text-amber-600">
-                  <span class="material-icons" style="font-size:16px">star</span>{{ p.rating }}
-                  <span *ngIf="p.userRatingsTotal" class="text-xs text-teal-900/40">({{ p.userRatingsTotal }})</span>
-                </div>
-              </div>
-              <p *ngIf="p.specialty" class="mt-0.5 text-sm text-teal-900/70">{{ p.specialty }}</p>
-              <p *ngIf="p.address" class="mt-1 text-xs text-teal-900/60"><span class="material-icons align-middle" style="font-size:13px">place</span> {{ p.address }}</p>
-              <span *ngIf="p.offer?.discountText" class="mt-1.5 inline-block rounded bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
-                {{ p.offer?.discountText }}
-              </span>
-            </div>
-          </div>
-          <div class="mt-3 grid grid-cols-2 gap-2">
-            <a [href]="p.phone ? 'tel:' + p.phone : null" [class.opacity-40]="!p.phone"
-              [attr.aria-label]="'Call ' + p.name"
-              class="flex min-h-[44px] items-center justify-center gap-1 rounded-lg border border-teal-600 py-2 text-xs font-semibold text-teal-700 transition-colors duration-150 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500">
-              <span class="material-icons" style="font-size:15px" aria-hidden="true">call</span> Call
-            </a>
-            <a [href]="p.bookingUrl || p.website || p.mapsUrl || null" [class.opacity-40]="!(p.bookingUrl || p.website || p.mapsUrl)"
-              target="_blank" rel="noopener" [attr.aria-label]="'Book a consult with ' + p.name"
-              class="flex min-h-[44px] items-center justify-center gap-1 rounded-lg bg-teal-600 py-2 text-xs font-semibold text-white transition-colors duration-150 hover:bg-teal-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2">
-              <span class="material-icons" style="font-size:15px" aria-hidden="true">medical_services</span> Talk to this doctor
-            </a>
-          </div>
-        </div>
-
-        <p *ngIf="doctors.length" class="pt-1 text-xs font-semibold uppercase tracking-wide text-teal-900/50">Other doctors nearby</p>
-      </div>
-
-      <div *ngIf="doctors.length" class="space-y-3">
-        <p class="font-heading font-semibold text-teal-900">{{ selectedSpecialty || 'Doctors' }} near you</p>
-        <p class="text-xs text-teal-900/60">
-          Listings come from Google/OpenStreetMap. We don't verify or endorse practitioners — please check a doctor's registration before consulting.
-        </p>
-        <p *ngIf="multiSpecialist" class="text-xs text-teal-900/60">
-          Also recommended:
-          <ng-container *ngFor="let o of otherSpecialists; let last = last">
-            <button (click)="selectSpecialist(o.specialty)" class="font-semibold text-teal-700 underline">show {{ o.specialty }}s</button><span *ngIf="!last">, </span>
-          </ng-container>
-        </p>
-
-        <!-- no verified specialist in this area: don't elevate an unrelated clinic -->
-        <p *ngIf="!hasSpecialtyMatch" class="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
-          We couldn't find a verified {{ selectedSpecialty || 'specialist' }} in this area. Showing nearby clinics — please confirm the specialty before booking, or try a larger city.
-        </p>
-
-        <!-- recommended pick (rich card) — only a verified specialty match -->
-        <div *ngIf="featuredDoctor as rec" class="rounded-2xl border-2 border-teal-500 bg-white p-4">
-          <div class="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-teal-700">
-            <span class="material-icons" style="font-size:15px">recommend</span> Top rated nearby
-          </div>
-          <div class="mt-2 flex items-start gap-3">
-            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-base font-bold text-white"
-              [style.background]="avatarColor(rec.name)">{{ initials(rec.name) }}</div>
-            <div class="min-w-0 flex-1">
-              <div class="flex items-start justify-between gap-2">
-                <p class="font-heading font-bold text-teal-900">{{ rec.name }}</p>
-                <div *ngIf="rec.rating" class="flex shrink-0 items-center gap-1 text-sm text-amber-600">
-                  <span class="material-icons" style="font-size:16px">star</span>{{ rec.rating }}
-                  <span *ngIf="rec.userRatingsTotal" class="text-xs text-teal-900/40">({{ rec.userRatingsTotal }})</span>
-                </div>
-              </div>
-              <p class="mt-0.5 text-sm text-teal-900/70">{{ recommendReason(rec) }}</p>
-              <p *ngIf="rec.address" class="mt-1 text-xs text-teal-900/60"><span class="material-icons align-middle" style="font-size:13px">place</span> {{ rec.address }}</p>
-              <p *ngIf="rec.hours" class="mt-0.5 text-xs text-teal-900/60"><span class="material-icons align-middle" style="font-size:13px">schedule</span> {{ rec.hours }}</p>
-              <span *ngIf="rec.openNow === true" class="mt-1 inline-block rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-semibold text-green-700">Open now</span>
-              <span *ngIf="rec.openNow === false" class="mt-1 inline-block rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-700">Closed now</span>
-            </div>
-          </div>
-          <p class="mt-3 text-xs text-teal-900/60">How to book: call the clinic, book on their website, or get directions and visit.</p>
-          <div class="mt-2 grid grid-cols-3 gap-2">
-            <a [href]="rec.phone ? 'tel:' + rec.phone : null" [class.opacity-40]="!rec.phone"
-              class="flex items-center justify-center gap-1 rounded-lg bg-teal-600 py-2 text-xs font-semibold text-white">
-              <span class="material-icons" style="font-size:15px">call</span> Call
-            </a>
-            <a [href]="rec.website || rec.mapsUrl" target="_blank" rel="noopener"
-              class="flex items-center justify-center gap-1 rounded-lg border border-teal-600 py-2 text-xs font-semibold text-teal-700">
-              <span class="material-icons" style="font-size:15px">event</span> {{ rec.website ? 'Book online' : 'Details' }}
-            </a>
-            <a [href]="rec.mapsUrl" target="_blank" rel="noopener"
-              class="flex items-center justify-center gap-1 rounded-lg border border-teal-600 py-2 text-xs font-semibold text-teal-700">
-              <span class="material-icons" style="font-size:15px">directions</span> Directions
-            </a>
-          </div>
-        </div>
-
-        <!-- other options -->
-        <p *ngIf="featuredDoctor && doctors.length > 1" class="text-xs font-semibold uppercase tracking-wide text-teal-900/50">More options nearby</p>
-        <ng-container *ngFor="let d of doctors">
-          <div *ngIf="d !== featuredDoctor" class="rounded-2xl bg-white p-4 ring-1 ring-black/5">
-            <div class="flex items-start gap-3">
-              <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
-                [style.background]="avatarColor(d.name)">{{ initials(d.name) }}</div>
-              <div class="min-w-0 flex-1">
-                <div class="flex items-start justify-between gap-2">
-                  <div>
-                    <p class="font-medium text-teal-900">{{ d.name }}</p>
-                    <p *ngIf="!d.matchesSpecialty" class="text-[11px] text-amber-700/80">Specialty not verified — confirm before booking</p>
-                    <p class="text-xs text-teal-900/60">{{ d.address }}</p>
-                    <p *ngIf="d.hours" class="text-xs text-teal-900/50">{{ d.hours }}</p>
-                  </div>
-                  <div *ngIf="d.rating" class="flex shrink-0 items-center gap-1 text-sm text-amber-600">
-                    <span class="material-icons" style="font-size:16px">star</span>{{ d.rating }}
-                    <span *ngIf="d.userRatingsTotal" class="text-xs text-teal-900/40">({{ d.userRatingsTotal }})</span>
-                  </div>
-                </div>
-                <div class="mt-2 flex flex-wrap items-center gap-4">
-                  <a *ngIf="d.phone" [href]="'tel:' + d.phone" class="inline-flex items-center gap-1 text-sm font-medium text-teal-700 hover:text-teal-900">
-                    <span class="material-icons" style="font-size:16px">call</span> Call
-                  </a>
-                  <a *ngIf="d.website" [href]="d.website" target="_blank" rel="noopener" class="inline-flex items-center gap-1 text-sm font-medium text-teal-700 hover:text-teal-900">
-                    <span class="material-icons" style="font-size:16px">event</span> Book
-                  </a>
-                  <a *ngIf="d.mapsUrl" [href]="d.mapsUrl" target="_blank" rel="noopener" class="inline-flex items-center gap-1 text-sm font-medium text-teal-700 hover:text-teal-900">
-                    <span class="material-icons" style="font-size:16px">place</span> Maps
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-        </ng-container>
-        <p class="text-[11px] text-teal-900/40">Results from Google/OpenStreetMap. Please verify details before visiting.</p>
-      </div>
-
-      <!-- No verified specialist here: offer to search another city/area. Shown for
-           both "no results" and "results but none match the specialty". -->
-      <button *ngIf="doctorsSearched && !hasSpecialtyMatch && !doctorsLoading"
-        (click)="searchAnotherArea()"
-        class="mt-1 flex w-full items-center justify-center gap-1 rounded-lg border border-teal-600 py-2.5 text-sm font-semibold text-teal-700 hover:bg-teal-50">
-        <span class="material-icons" style="font-size:16px">travel_explore</span>
-        Search {{ selectedSpecialty || 'doctors' }} in another area
-      </button>
-
       <div #scrollAnchor></div>
     </div>
   </main>
@@ -802,21 +622,312 @@
     <div class="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
       <div class="flex items-center justify-between">
         <h3 class="font-heading text-lg font-bold text-teal-900">Where should I look?</h3>
-        <button (click)="askCity = false" class="material-icons text-teal-900/50">close</button>
+        <button (click)="closeLocationPrompt()" class="material-icons text-teal-900/50">close</button>
       </div>
       <p class="mt-1 text-sm text-teal-900/60">
         Enter your city/area to find {{ selectedSpecialty || 'doctors' }} nearby.
       </p>
       <div class="mt-3 flex gap-2">
-        <input [(ngModel)]="city" (keyup.enter)="submitCity()" placeholder="e.g. Balasore, Odisha"
+        <input [ngModel]="city" (ngModelChange)="onCityInput($event)" (keyup.enter)="submitCity()"
+          placeholder="e.g. Balasore, Odisha" autocomplete="off" role="combobox" aria-autocomplete="list"
+          [attr.aria-expanded]="citySuggestions.length > 0" aria-controls="city-suggestions"
           class="flex-1 rounded-lg border border-black/10 px-3 py-2.5 text-sm outline-none focus:border-teal-600" autofocus />
         <button (click)="submitCity()" class="rounded-lg bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white">Search</button>
       </div>
+
+      <!-- city/area suggestions (debounced; the field still works if they fail) -->
+      <p *ngIf="suggestLoading" class="mt-2 flex items-center gap-1.5 text-xs text-teal-900/50">
+        <svg class="h-3.5 w-3.5 shrink-0 motion-safe:animate-spin360" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-opacity="0.25" stroke-width="3" />
+          <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+        </svg>
+        Looking up places…
+      </p>
+      <ul *ngIf="citySuggestions.length" id="city-suggestions" role="listbox"
+        class="mt-2 max-h-56 overflow-y-auto rounded-lg border border-black/10 bg-white">
+        <li *ngFor="let p of citySuggestions" role="option" [attr.aria-selected]="false">
+          <button type="button" (click)="pickPlace(p)"
+            class="flex w-full items-start gap-2 border-b border-black/5 px-3 py-2.5 text-left text-sm text-teal-900 last:border-0 hover:bg-teal-50">
+            <span class="material-icons mt-0.5 shrink-0 text-teal-600" style="font-size:16px">place</span>
+            <span class="min-w-0">{{ p.label }}</span>
+          </button>
+        </li>
+      </ul>
       <button (click)="useMyLocation()" class="mt-3 flex w-full items-center justify-center gap-1 rounded-lg border border-teal-600 py-2.5 text-sm font-semibold text-teal-700 hover:bg-teal-50">
         <span class="material-icons" style="font-size:16px">my_location</span> Use my current location
       </button>
       <p *ngIf="locError" class="mt-2 text-xs text-red-600">{{ locError }}</p>
     </div>
+  </div>
+
+  <!-- doctor results screen — a place of its own, so the patient never has to
+       scroll back through the whole health summary to reach a phone number -->
+  <div *ngIf="showDoctors" class="fixed inset-0 z-40 flex flex-col bg-cream">
+    <header class="flex items-center gap-2 border-b border-black/5 bg-white px-3 py-3 sm:px-4">
+      <button (click)="closeDoctors()" aria-label="Back to my health summary"
+        class="-ml-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-teal-700 hover:bg-teal-50">
+        <span class="material-icons" style="font-size:22px" aria-hidden="true">arrow_back</span>
+      </button>
+      <div class="min-w-0 flex-1">
+        <!-- One line each, both truncating: a long specialty or a long area name
+             must never wrap the header into the "Change area" button. -->
+        <p class="truncate font-heading text-[15px] font-bold leading-tight text-teal-900 sm:text-base">
+          {{ selectedSpecialty || 'Doctors' }}
+        </p>
+        <p class="truncate text-xs text-teal-900/55" aria-live="polite">
+          <span *ngIf="searchAreaShort">{{ searchAreaShort }}</span>
+          <span *ngIf="searchAreaShort && (doctorsLoading || doctorsSearched)" aria-hidden="true"> · </span>
+          <span *ngIf="doctorsLoading">Searching…</span>
+          <span *ngIf="!doctorsLoading && doctorsSearched">{{ resultCount }} result{{ resultCount === 1 ? '' : 's' }}</span>
+        </p>
+      </div>
+      <button (click)="searchAnotherArea()" aria-label="Search in another area"
+        class="flex h-10 shrink-0 items-center gap-1.5 rounded-lg border border-teal-600 px-3 text-sm font-semibold text-teal-700 hover:bg-teal-50">
+        <span class="material-icons" style="font-size:18px" aria-hidden="true">edit_location_alt</span>
+        <span class="hidden xs:inline">Change area</span>
+      </button>
+    </header>
+
+    <main class="flex-1 overflow-y-auto px-4 py-4" style="padding-bottom: max(1rem, env(safe-area-inset-bottom));">
+      <div class="mx-auto max-w-2xl space-y-4">
+        <p *ngIf="locError && !doctorsLoading" class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{{ locError }}</p>
+
+        <!-- Said once for the whole screen — it used to repeat above the partner
+             card, above the list, and again at the bottom. -->
+        <p *ngIf="hasDoctorResults && !doctorsLoading" class="text-xs leading-snug text-teal-900/55">
+          Listings come from Google and OpenStreetMap. We don't verify or endorse practitioners — please check a doctor's registration before consulting.
+        </p>
+
+        <!-- nothing at all came back -->
+        <div *ngIf="doctorsSearched && !doctorsLoading && !hasDoctorResults && !locError"
+          class="rounded-2xl bg-white p-5 text-center ring-1 ring-black/5">
+          <span class="material-icons text-teal-900/30" style="font-size:34px">location_off</span>
+          <p class="mt-1 font-heading font-semibold text-teal-900">
+            No {{ selectedSpecialty || 'doctors' }} found<span *ngIf="lastSearchPlace"> in {{ lastSearchPlace }}</span>
+          </p>
+          <p class="mt-1 text-sm text-teal-900/60">Try a nearby city, a larger city, or your pincode.</p>
+        </div>
+
+    <!-- doctor discovery loading. The spinner is inline SVG on purpose: the icon
+         font only ships the classic Material Icons set, so a Material Symbols
+         ligature here rendered as wide literal text and crushed the label. -->
+    <div *ngIf="doctorsLoading" class="space-y-3" role="status" aria-live="polite">
+      <!-- The header already names the specialty and the area, so this line
+           carries the one thing it can't: how long this is likely to take. -->
+      <div class="flex items-start gap-2 text-sm text-teal-900/70">
+        <svg class="mt-0.5 h-[18px] w-[18px] shrink-0 text-teal-500 motion-safe:animate-spin360" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-opacity="0.25" stroke-width="3" />
+          <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+        </svg>
+        <span class="min-w-0">Checking nearby listings — this takes a few seconds.</span>
+      </div>
+      <!-- Same footprint as a real result card, so nothing jumps on arrival. -->
+      <div *ngFor="let s of [1,2,3]" class="rounded-2xl bg-white p-4 ring-1 ring-black/5">
+        <div class="flex items-start gap-3">
+          <div class="h-11 w-11 shrink-0 rounded-full bg-teal-100 motion-safe:animate-pulse"></div>
+          <div class="min-w-0 flex-1 space-y-2">
+            <div class="h-3.5 w-1/2 rounded bg-teal-100 motion-safe:animate-pulse"></div>
+            <div class="h-2.5 w-3/4 rounded bg-teal-50 motion-safe:animate-pulse"></div>
+            <div class="h-2.5 w-2/5 rounded bg-teal-50 motion-safe:animate-pulse"></div>
+          </div>
+        </div>
+        <div class="mt-3 flex gap-4">
+          <div class="h-3 w-12 rounded bg-teal-50 motion-safe:animate-pulse"></div>
+          <div class="h-3 w-12 rounded bg-teal-50 motion-safe:animate-pulse"></div>
+          <div class="h-3 w-12 rounded bg-teal-50 motion-safe:animate-pulse"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- affiliate-first: partner clinic(s) + offer -->
+    <div *ngIf="affiliateDoctors.length && !doctorsLoading" class="space-y-3">
+      <p class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-amber-700">
+        <span class="material-icons" style="font-size:16px" aria-hidden="true">verified</span>
+        Partner clinic
+      </p>
+
+      <!-- clinic-wide offer banner -->
+      <div *ngIf="affiliateOffer" class="flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2.5">
+        <span class="material-icons shrink-0 text-amber-600" style="font-size:16px" aria-hidden="true">local_offer</span>
+        <div class="min-w-0">
+          <p class="text-sm font-semibold text-amber-800">{{ affiliateOffer.title }}<span *ngIf="affiliateOffer.discountText"> — {{ affiliateOffer.discountText }}</span></p>
+          <p *ngIf="affiliateOffer.description" class="text-xs text-amber-700/80">{{ affiliateOffer.description }}</p>
+        </div>
+      </div>
+
+      <div *ngFor="let p of affiliateDoctors" class="rounded-2xl border-2 border-amber-400 bg-white p-4">
+        <div class="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-amber-600">
+          <span class="material-icons" style="font-size:16px" aria-hidden="true">handshake</span> Partner clinic
+        </div>
+        <div class="mt-2 flex items-start gap-3">
+          <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-base font-bold text-white"
+            [style.background]="avatarColor(p.name)">{{ initials(p.name) }}</div>
+          <div class="min-w-0 flex-1">
+            <div class="flex items-start justify-between gap-2">
+              <div class="min-w-0">
+                <p class="font-heading font-bold text-teal-900">{{ p.name }}</p>
+                <p *ngIf="p.clinicName" class="text-xs text-teal-900/60">{{ p.clinicName }}</p>
+              </div>
+              <div *ngIf="p.rating" class="flex shrink-0 items-center gap-1 text-sm text-amber-600">
+                <span class="material-icons" style="font-size:16px">star</span>{{ p.rating }}
+                <span *ngIf="p.userRatingsTotal" class="text-xs text-teal-900/40">({{ p.userRatingsTotal }})</span>
+              </div>
+            </div>
+            <p *ngIf="p.specialty" class="mt-0.5 text-sm text-teal-900/70">{{ p.specialty }}</p>
+            <p *ngIf="p.address" class="mt-1 text-xs text-teal-900/60"><span class="material-icons align-middle" style="font-size:14px" aria-hidden="true">place</span> {{ p.address }}</p>
+            <span *ngIf="p.offer?.discountText" class="mt-1.5 inline-block rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
+              {{ p.offer?.discountText }}
+            </span>
+          </div>
+        </div>
+        <div class="mt-3 flex flex-wrap gap-2">
+          <a [href]="p.phone ? 'tel:' + p.phone : null" [class.opacity-40]="!p.phone"
+            [attr.aria-label]="'Call ' + p.name"
+            class="flex min-h-[44px] min-w-[7.5rem] flex-1 items-center justify-center gap-1.5 rounded-lg border border-teal-600 px-3 text-xs font-semibold text-teal-700 transition-colors duration-150 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-1">
+            <span class="material-icons" style="font-size:16px" aria-hidden="true">call</span> Call
+          </a>
+          <a [href]="p.bookingUrl || p.website || p.mapsUrl || null" [class.opacity-40]="!(p.bookingUrl || p.website || p.mapsUrl)"
+            target="_blank" rel="noopener" [attr.aria-label]="'Book a consult with ' + p.name"
+            class="flex min-h-[44px] min-w-[7.5rem] flex-1 items-center justify-center gap-1.5 rounded-lg bg-teal-600 px-3 text-xs font-semibold text-white transition-colors duration-150 hover:bg-teal-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-1">
+            <span class="material-icons" style="font-size:16px" aria-hidden="true">medical_services</span> Book a consult
+          </a>
+        </div>
+      </div>
+
+      <p *ngIf="doctors.length" class="pt-1 text-xs font-semibold uppercase tracking-wide text-teal-900/50">Other doctors nearby</p>
+    </div>
+
+    <div *ngIf="doctors.length" class="space-y-3">
+      <p *ngIf="multiSpecialist" class="text-xs text-teal-900/60">
+        Also recommended:
+        <ng-container *ngFor="let o of otherSpecialists; let last = last">
+          <button (click)="selectSpecialist(o.specialty)" class="font-semibold text-teal-700 underline">show {{ o.specialty }}s</button><span *ngIf="!last">, </span>
+        </ng-container>
+      </p>
+
+      <!-- Listings often omit the specialty, so say what we could and couldn't
+           confirm rather than implying the area has no such doctor. -->
+      <p *ngIf="!hasSpecialtyMatch" class="flex items-start gap-1.5 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+        <span class="material-icons shrink-0" style="font-size:14px" aria-hidden="true">info</span>
+        <span>No listing here states {{ selectedSpecialty || 'this specialty' }} — check when you call, or try a larger city.</span>
+      </p>
+
+      <!-- The one pick we lead with. Teal + "Top rated" only when the backend
+           verified the specialty; otherwise amber + "Best rated", so the card
+           never implies an endorsement we can't back. -->
+      <div *ngIf="topPick as rec" class="rounded-2xl border-2 bg-white p-4"
+        [ngClass]="topPickVerified ? 'border-teal-500' : 'border-amber-200'">
+        <div class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide"
+          [ngClass]="topPickVerified ? 'text-teal-700' : 'text-amber-700'">
+          <span class="material-icons" style="font-size:16px" aria-hidden="true">{{ topPickVerified ? 'recommend' : (topPick?.rating ? 'star' : 'near_me') }}</span>
+          {{ topPickLabel }}
+        </div>
+        <div class="mt-2 flex items-start gap-3">
+          <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-base font-bold text-white"
+            [style.background]="avatarColor(rec.name)">{{ initials(rec.name) }}</div>
+          <div class="min-w-0 flex-1">
+            <div class="flex items-start justify-between gap-2">
+              <p class="font-heading font-bold text-teal-900">{{ rec.name }}</p>
+              <div *ngIf="rec.rating" class="flex shrink-0 items-center gap-1 text-sm text-amber-600">
+                <span class="material-icons" style="font-size:16px">star</span>{{ rec.rating }}
+                <span *ngIf="rec.userRatingsTotal" class="text-xs text-teal-900/40">({{ rec.userRatingsTotal }})</span>
+              </div>
+            </div>
+            <p class="mt-0.5 text-sm text-teal-900/70">{{ recommendReason(rec) }}</p>
+            <span *ngIf="!topPickVerified" class="mt-1.5 inline-block rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
+              Specialty not verified
+            </span>
+            <p *ngIf="rec.address" class="mt-1 text-xs text-teal-900/60"><span class="material-icons align-middle" style="font-size:14px" aria-hidden="true">place</span> {{ rec.address }}</p>
+            <p *ngIf="rec.hours" class="mt-0.5 text-xs text-teal-900/60"><span class="material-icons align-middle" style="font-size:14px" aria-hidden="true">schedule</span> {{ rec.hours }}</p>
+            <span *ngIf="rec.openNow === true" class="mt-1.5 inline-block rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-semibold text-green-700">Open now</span>
+            <span *ngIf="rec.openNow === false" class="mt-1.5 inline-block rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-700">Closed now</span>
+          </div>
+        </div>
+        <p class="mt-3 text-xs text-teal-900/60">
+          How to book: {{ rec.phone ? 'call the clinic' : 'visit or check the listing' }}{{ rec.website ? ', book on their website' : '' }}, or get directions and go in.
+        </p>
+        <!-- Wraps instead of squeezing: at 320px three columns clipped the
+             labels. Each action keeps a 44px-tall touch target. -->
+        <div class="mt-2 flex flex-wrap gap-2">
+          <a *ngIf="rec.phone" [href]="'tel:' + rec.phone"
+            [attr.aria-label]="'Call ' + rec.name"
+            class="flex min-h-[44px] min-w-[7.5rem] flex-1 items-center justify-center gap-1.5 rounded-lg bg-teal-600 px-3 text-xs font-semibold text-white transition-colors duration-150 hover:bg-teal-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-1">
+            <span class="material-icons" style="font-size:16px" aria-hidden="true">call</span> Call
+          </a>
+          <a *ngIf="rec.website" [href]="rec.website" target="_blank" rel="noopener"
+            [attr.aria-label]="'Book online with ' + rec.name"
+            class="flex min-h-[44px] min-w-[7.5rem] flex-1 items-center justify-center gap-1.5 rounded-lg px-3 text-xs font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-1"
+            [ngClass]="rec.phone ? 'border border-teal-600 text-teal-700 hover:bg-teal-50' : 'bg-teal-600 text-white hover:bg-teal-700'">
+            <span class="material-icons" style="font-size:16px" aria-hidden="true">event</span> Book online
+          </a>
+          <a [href]="rec.mapsUrl" target="_blank" rel="noopener"
+            [attr.aria-label]="'Directions to ' + rec.name"
+            class="flex min-h-[44px] min-w-[7.5rem] flex-1 items-center justify-center gap-1.5 rounded-lg px-3 text-xs font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-1"
+            [ngClass]="(rec.phone || rec.website) ? 'border border-teal-600 text-teal-700 hover:bg-teal-50' : 'bg-teal-600 text-white hover:bg-teal-700'">
+            <span class="material-icons" style="font-size:16px" aria-hidden="true">directions</span> Directions
+          </a>
+        </div>
+      </div>
+
+      <!-- other options -->
+      <p *ngIf="topPick && doctors.length > 1" class="text-xs font-semibold uppercase tracking-wide text-teal-900/50">More options nearby</p>
+      <ng-container *ngFor="let d of doctors">
+        <div *ngIf="d !== topPick" class="rounded-2xl bg-white p-4 ring-1 ring-black/5">
+          <div class="flex items-start gap-3">
+            <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
+              [style.background]="avatarColor(d.name)">{{ initials(d.name) }}</div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-start justify-between gap-2">
+                <div>
+                  <p class="font-heading font-semibold text-teal-900">{{ d.name }}</p>
+                  <p *ngIf="!d.matchesSpecialty" class="text-[11px] text-amber-700">Specialty not verified</p>
+                  <p *ngIf="d.address" class="mt-0.5 text-xs text-teal-900/60">
+                    <span class="material-icons align-middle" style="font-size:14px" aria-hidden="true">place</span> {{ d.address }}
+                  </p>
+                  <p *ngIf="d.hours" class="text-xs text-teal-900/60">
+                    <span class="material-icons align-middle" style="font-size:14px" aria-hidden="true">schedule</span> {{ d.hours }}
+                  </p>
+                </div>
+                <div *ngIf="d.rating" class="flex shrink-0 items-center gap-1 text-sm text-amber-600">
+                  <span class="material-icons" style="font-size:16px">star</span>{{ d.rating }}
+                  <span *ngIf="d.userRatingsTotal" class="text-xs text-teal-900/40">({{ d.userRatingsTotal }})</span>
+                </div>
+              </div>
+              <!-- Padded so each link clears a 40px tap target on a phone. -->
+              <div class="mt-1.5 flex flex-wrap items-center gap-x-1 gap-y-1">
+                <a *ngIf="d.phone" [href]="'tel:' + d.phone" class="inline-flex min-h-[40px] items-center gap-1 rounded-lg px-2 py-1.5 text-sm font-medium text-teal-700 hover:bg-teal-50 hover:text-teal-900">
+                  <span class="material-icons" style="font-size:16px" aria-hidden="true">call</span> Call
+                </a>
+                <a *ngIf="d.website" [href]="d.website" target="_blank" rel="noopener" class="inline-flex min-h-[40px] items-center gap-1 rounded-lg px-2 py-1.5 text-sm font-medium text-teal-700 hover:bg-teal-50 hover:text-teal-900">
+                  <span class="material-icons" style="font-size:16px" aria-hidden="true">event</span> Book
+                </a>
+                <a *ngIf="d.mapsUrl" [href]="d.mapsUrl" target="_blank" rel="noopener" class="inline-flex min-h-[40px] items-center gap-1 rounded-lg px-2 py-1.5 text-sm font-medium text-teal-700 hover:bg-teal-50 hover:text-teal-900">
+                  <span class="material-icons" style="font-size:16px" aria-hidden="true">place</span> Maps
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+
+    <!-- No verified specialist here: offer to search another city/area. Shown for
+         both "no results" and "results but none match the specialty". -->
+    <!-- The header already names the specialty, so this stays one short line
+         even on a 320px phone. -->
+    <button *ngIf="doctorsSearched && !hasSpecialtyMatch && !doctorsLoading"
+      (click)="searchAnotherArea()"
+      class="mt-1 flex min-h-[44px] w-full items-center justify-center gap-1.5 rounded-lg border border-teal-600 px-3 text-sm font-semibold text-teal-700 hover:bg-teal-50">
+      <span class="material-icons shrink-0" style="font-size:18px" aria-hidden="true">travel_explore</span>
+      Search another area
+    </button>
+
+        <button *ngIf="!doctorsLoading" (click)="closeDoctors()"
+          class="flex min-h-[44px] w-full items-center justify-center gap-1 rounded-lg border border-black/10 py-2.5 text-sm font-medium text-teal-900/70 hover:bg-white">
+          <span class="material-icons" style="font-size:16px">description</span> Back to my health summary
+        </button>
+      </div>
+    </main>
   </div>
 
   <!-- leave-chat confirmation (anonymous user navigating home) -->
