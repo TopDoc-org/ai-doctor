@@ -29,7 +29,14 @@
   <meta name="twitter:description" content="Free AI health guidance. Symptoms in, clear answer out — plus doctors near you.">
   <meta name="twitter:image" content="https://doctoguide.knocdoc.in/assets/og-image.png">
 
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <!-- Tab icon: the DoctoGuide mark (cross + compass) cut out of its badge, so
+       it sits transparent on any tab strip. The .ico carries 16/32/48/64 so
+       Windows/Chrome pick a crisp size. The home-screen / PWA icons keep the
+       solid badge, since iOS composites transparency onto black. -->
+  <link rel="icon" type="image/x-icon" href="favicon.ico?v=3" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32.png?v=3">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16.png?v=3">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png">
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#0d9488">
 

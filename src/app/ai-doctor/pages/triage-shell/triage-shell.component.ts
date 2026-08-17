@@ -8,6 +8,8 @@ import {
   ViewChild,
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { Subject, Subscription, of } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { ActivatedRoute, Router } from '@angular/router';
 import { environment } from '../../../../environments/environment';
 import { AiDoctorApiService } from '../../services/ai-doctor-api.service';
@@ -19,6 +21,7 @@ import {
   Doctor,
   MessageResponse,
   PartnerOffer,
+  PlaceSuggestion,
   Report,
   SpecialtySuggestion,
 } from '../../models';
@@ -130,6 +133,17 @@ export class TriageShellComponent implements OnInit, OnDestroy {
   askCity = false;
   city = '';
   locError = '';
+  // Results live on their own screen (a full-height panel over the chat) so the
+  // patient isn't scrolling the whole health summary to reach a phone number.
+  showDoctors = false;
+  // City/area type-ahead for the location prompt.
+  citySuggestions: PlaceSuggestion[] = [];
+  suggestLoading = false;
+  // Set when the user picks a suggestion: carries the exact point, so discovery
+  // never has to re-geocode the typed text.
+  pickedPlace: PlaceSuggestion | null = null;
+  private citySearch$ = new Subject<string>();
+  private citySearchSub?: Subscription;
   // Last place we searched (for the "not found here — try another area" offer).
   lastSearchPlace = '';
   // True once a doctor search has returned (gates the "Search another area" CTA).
@@ -207,6 +221,8 @@ export class TriageShellComponent implements OnInit, OnDestroy {
       }, 4000);
     }
 
+    if (isPlatformBrowser(this.platformId)) this.watchCityInput();
+
     // Resolve country context (IP-based, cached) -> swap in local emergency
     // numbers + country name. Server may still override per-message later.
     this.country.init().then(() => {
@@ -220,6 +236,11 @@ export class TriageShellComponent implements OnInit, OnDestroy {
     // Don't create a session up front — that would persist an empty conversation
     // on every load. A session is created lazily on the first user message.
     if (wantsLogin) {
+      // Arriving through the account door, not continuing a chat -> never
+      // resurrect the stored session here. A chat that was already running
+      // when the user logs in keeps its session, because that login goes
+      // through openAuth() inside the shell, not this entry point.
+      this.startFreshChat();
       this.consumeSeedParam();
       this.openAccount();
     }
@@ -240,6 +261,16 @@ export class TriageShellComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     if (this.placeholderTimer) clearInterval(this.placeholderTimer);
+    this.citySearchSub?.unsubscribe();
+  }
+
+  // Drop the stored session so this visit opens a fresh chat. A logged-in
+  // user finds the old one under "My consults"; an anonymous one gets it
+  // back from the previous-chat banner.
+  private startFreshChat(): void {
+    if (!this.state.sessionId) return;
+    if (this.state.isLoggedIn) this.state.reset();
+    else this.state.stashSession();
   }
 
   private consumeSeedParam(): void {
@@ -674,6 +705,12 @@ export class TriageShellComponent implements OnInit, OnDestroy {
 
   connectDoctor(): void {
     if (!this.state.isLoggedIn) return this.openAuth('doctors');
+    // Already searched -> go straight back to the results screen; the patient
+    // can change the area from there.
+    if (this.hasDoctorResults) {
+      this.showDoctors = true;
+      return;
+    }
     this.openLocationPrompt();
   }
 
@@ -849,6 +886,9 @@ export class TriageShellComponent implements OnInit, OnDestroy {
     this.affiliateDoctors = [];
     this.affiliateOffer = null;
     this.askCity = false;
+    this.showDoctors = false;
+    this.citySuggestions = [];
+    this.pickedPlace = null;
     this.emergency = false;
     this.ageSexDone = false;
     this.age = null;
@@ -886,12 +926,60 @@ export class TriageShellComponent implements OnInit, OnDestroy {
   // ---- Doctor location flow (honors typed locality; geo is optional) ----
   private openLocationPrompt(): void {
     this.locError = '';
+    this.citySuggestions = [];
     // Prefill from the district/city captured at sign-in if we have it.
     if (!this.city) {
       this.city =
         this.state.location?.district || this.state.location?.city || '';
     }
     this.askCity = true;
+  }
+
+  // Debounced city/area suggestions. Failures are silent — the field still
+  // works as a plain text input, which is the whole fallback we need.
+  private watchCityInput(): void {
+    this.citySearchSub = this.citySearch$
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        switchMap((q) => {
+          if (q.trim().length < 3) {
+            this.suggestLoading = false;
+            return of({ places: [] as PlaceSuggestion[] });
+          }
+          this.suggestLoading = true;
+          return this.api
+            .searchPlaces(q.trim(), this.country.countryCode)
+            .pipe(catchError(() => of({ places: [] as PlaceSuggestion[] })));
+        })
+      )
+      .subscribe((res) => {
+        this.suggestLoading = false;
+        this.citySuggestions = res.places || [];
+      });
+  }
+
+  onCityInput(value: string): void {
+    this.city = value;
+    // Typing invalidates an earlier pick — the text is the source of truth again.
+    this.pickedPlace = null;
+    this.locError = '';
+    this.citySearch$.next(value);
+  }
+
+  // Picking a suggestion searches straight away: the patient already answered
+  // the only question this modal asks.
+  pickPlace(p: PlaceSuggestion): void {
+    this.pickedPlace = p;
+    this.city = p.city || p.label;
+    this.citySuggestions = [];
+    this.submitCity();
+  }
+
+  closeLocationPrompt(): void {
+    this.askCity = false;
+    this.citySuggestions = [];
+    this.suggestLoading = false;
   }
 
   async useMyLocation(): Promise<void> {
@@ -904,8 +992,9 @@ export class TriageShellComponent implements OnInit, OnDestroy {
       this.locError = "Couldn't get your location — type your city/area instead.";
       return;
     }
-    this.askCity = false;
+    this.closeLocationPrompt();
     this.lastSearchPlace = loc.city || loc.district || 'your area';
+    this.openDoctorsScreen();
     this.fetchDoctors({ lat: loc.lat, lng: loc.lng });
   }
 
@@ -914,17 +1003,55 @@ export class TriageShellComponent implements OnInit, OnDestroy {
   // selectedSpecialty persists, so only the location changes.
   searchAnotherArea(): void {
     this.city = '';
+    this.pickedPlace = null;
     this.locError = '';
+    this.citySuggestions = [];
     this.askCity = true;
   }
 
   submitCity(): void {
     const c = this.city.trim();
     if (!c) return;
-    this.askCity = false;
+    this.closeLocationPrompt();
     this.doctorsLoading = true;
-    this.lastSearchPlace = c;
-    this.fetchDoctors({ city: c });
+    this.lastSearchPlace = this.pickedPlace?.city || c;
+    this.openDoctorsScreen();
+    // A picked suggestion carries its own coordinates: the Google path still
+    // searches by name, and the OSM path skips geocoding the string.
+    const picked = this.pickedPlace;
+    this.fetchDoctors(
+      picked
+        ? { city: picked.city || c, lat: picked.lat, lng: picked.lng }
+        : { city: c }
+    );
+  }
+
+  // ---- Doctor results screen ----
+  private openDoctorsScreen(): void {
+    this.showDoctors = true;
+    this.doctors = [];
+    this.affiliateDoctors = [];
+    this.affiliateOffer = null;
+    this.doctorsSearched = false;
+  }
+
+  closeDoctors(): void {
+    this.showDoctors = false;
+  }
+
+  // True once a search has produced something worth reopening the screen for.
+  get hasDoctorResults(): boolean {
+    return this.doctors.length > 0 || this.affiliateDoctors.length > 0;
+  }
+
+  // "Jabalpur, Madhya Pradesh" -> "Jabalpur" for the header line, which has to
+  // share one row with the result count on a 320px screen.
+  get searchAreaShort(): string {
+    return (this.lastSearchPlace || '').split(',')[0].trim();
+  }
+
+  get resultCount(): number {
+    return this.doctors.length + this.affiliateDoctors.length;
   }
 
   private fetchDoctors(locPart: { lat?: number; lng?: number; city?: string }): void {
@@ -938,23 +1065,24 @@ export class TriageShellComponent implements OnInit, OnDestroy {
         this.doctors = res.doctors || [];
         this.affiliateDoctors = res.affiliateDoctors || [];
         this.affiliateOffer = res.affiliateOffer || null;
-        // No verified match for the requested specialty (covers zero results and
-        // "results but none match"): tell the user in chat and offer to look
-        // elsewhere via the "Search another area" button.
+        // No listing states the specialty (covers zero results and "results but
+        // none match"). Say it the same way the results screen does, so the
+        // chat and the panel don't contradict each other.
         const hasMatch = this.doctors.some((d) => d.matchesSpecialty);
         if (!hasMatch && this.affiliateDoctors.length === 0) {
           const spec = this.selectedSpecialty || 'a specialist';
           const place = this.lastSearchPlace || 'that area';
           const text = this.doctors.length
-            ? `I couldn't find a verified ${spec} in ${place}. I've listed nearby clinics below — or I can look in another city/area. Tap "Search another area" to try somewhere else.`
+            ? `No listing in ${place} states ${spec} outright, so I've put the best-rated clinics nearby at the top. Check the specialty when you call, or tap "Search another area" to try somewhere else.`
             : res.error ||
-              `I couldn't find a ${spec} in ${place}. Want me to look in another city/area? Tap "Search another area" below.`;
+              `I couldn't find any clinic in ${place}. Want me to look in another city or area? Tap "Search another area".`;
           this.state.addMessage({ role: 'assistant', text });
         }
         this.scrollSoon();
       },
       error: () => {
         this.doctorsLoading = false;
+        this.doctorsSearched = true;
         this.locError = 'Search failed. Please try again.';
       },
     });
@@ -972,13 +1100,25 @@ export class TriageShellComponent implements OnInit, OnDestroy {
     )[0];
   }
 
-  // The doctor we actively feature in the green "recommended" hero — ONLY a
-  // verified specialty match. When the area has no real match (e.g. no Urologist
-  // in a small town), we don't elevate an unrelated clinic as "recommended";
-  // the template falls back to a plain list + a "no verified specialist" notice.
-  get featuredDoctor(): Doctor | null {
-    const rec = this.recommendedDoctor;
-    return rec && rec.matchesSpecialty ? rec : null;
+  // The one result we lift to the top of the screen. Most listings outside big
+  // cities come from OpenStreetMap, which rarely states a specialty, so gating
+  // this on a verified match left patients with no starting point at all.
+  // Instead we always lead with the best pick and let the label carry the truth:
+  // a verified match is "Top rated nearby"; anything else is "Best rated nearby"
+  // with the unverified-specialty caution on the card.
+  get topPick(): Doctor | null {
+    return this.recommendedDoctor;
+  }
+
+  get topPickVerified(): boolean {
+    return !!this.topPick?.matchesSpecialty;
+  }
+
+  // OpenStreetMap listings often carry no rating at all. Calling an unrated
+  // clinic "best rated" would be a claim the data doesn't support.
+  get topPickLabel(): string {
+    if (this.topPickVerified) return 'Top rated nearby';
+    return this.topPick?.rating ? 'Best rated nearby' : 'Nearest clinic';
   }
 
   // Any result actually matches the requested specialty?
@@ -991,9 +1131,13 @@ export class TriageShellComponent implements OnInit, OnDestroy {
   // honest (we can't confirm the specialty from the listing alone).
   recommendReason(d: Doctor): string {
     const spec = this.selectedSpecialty || 'your concern';
+    // The caution for an unverified specialty is its own chip on the card, so
+    // this line stays about why this result is the pick.
     const bits = d.matchesSpecialty
       ? [`Matches the suggested specialist for you (${spec})`]
-      : [`Nearby clinic — confirm they handle ${spec} before booking`];
+      : d.rating
+      ? ['Best-rated clinic in this area']
+      : ['Closest clinic in this area — no ratings listed'];
     if (d.rating) {
       bits.push(
         `highest rated nearby — ${d.rating}★${d.userRatingsTotal ? ' (' + d.userRatingsTotal + ' reviews)' : ''}`
@@ -1017,7 +1161,9 @@ export class TriageShellComponent implements OnInit, OnDestroy {
 
   // Deterministic avatar colour from the name.
   avatarColor(name?: string): string {
-    const colors = ['#0D9488', '#2563eb', '#7c3aed', '#db2777', '#ea580c', '#0891b2'];
+    // On-brand spread: teal family plus two warm accents. The old set ran to
+    // magenta and violet, which read as a different product next to the cards.
+    const colors = ['#0D9488', '#0F766E', '#0E7490', '#0891B2', '#B45309', '#4D7C6F'];
     let h = 0;
     for (const c of name || '') h = (h * 31 + c.charCodeAt(0)) % colors.length;
     return colors[h];
@@ -1150,6 +1296,10 @@ export class TriageShellComponent implements OnInit, OnDestroy {
     this.affiliateDoctors = [];
     this.affiliateOffer = null;
     this.askCity = false;
+    this.showDoctors = false;
+    this.doctorsSearched = false;
+    this.citySuggestions = [];
+    this.pickedPlace = null;
     this.ageSexDone = false;
     this.age = null;
     this.sex = '';

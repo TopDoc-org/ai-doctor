@@ -5,6 +5,7 @@ import { environment } from '../../environments/environment';
 import { CountryService } from '../ai-doctor/services/country.service';
 import { AiDoctorStateService } from '../ai-doctor/services/ai-doctor-state.service';
 import { SeoService } from '../core/seo.service';
+import { FirebaseAnalyticsService } from '../core/firebase-analytics.service';
 
 @Component({
   selector: 'app-landing',
@@ -90,9 +91,15 @@ export class LandingComponent implements OnInit, OnDestroy {
     private country: CountryService,
     private state: AiDoctorStateService,
     private seo: SeoService,
+    private analytics: FirebaseAnalyticsService,
     @Inject(PLATFORM_ID) platformId: Object,
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
+  }
+
+  // Which placement earned the follow — the header icon or the footer handle.
+  trackInstagramFollow(source: 'nav' | 'footer'): void {
+    this.analytics.logAnalyticsEvent('instagram_follow_click', { source });
   }
 
   // Label for the location banner. Avoids an escaped apostrophe in the template.

@@ -137,7 +137,7 @@
               <span *ngIf="o.discountText" class="mt-0.5 block text-sm text-amber-700">{{ o.discountText }}</span>
               <span class="mt-0.5 block text-[11px] text-stone-900/45">{{ o.specialty || 'All specialties' }}</span>
             </span>
-            <span *ngIf="savingOfferId === o.id" class="material-icons mt-0.5 shrink-0 text-grass-500 motion-safe:animate-spin360" style="font-size:18px" aria-hidden="true">progress_activity</span>
+            <svg *ngIf="savingOfferId === o.id" class="mt-0.5 h-[18px] w-[18px] shrink-0 text-grass-500 motion-safe:animate-spin360" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-opacity="0.25" stroke-width="3" /><path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round" /></svg>
           </label>
         </li>
       </ul>
