@@ -158,6 +158,7 @@
             "guessRoutes": false,
             "routes": [
               "/",
+              "/start",
               "/privacy",
               "/terms",
               "/disclaimer",

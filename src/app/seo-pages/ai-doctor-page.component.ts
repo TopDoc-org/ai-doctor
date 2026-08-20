@@ -1,27 +1,36 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { SeoService, SITE_URL } from '../core/seo.service';
 
+/**
+ * The `/ai-doctor` URL is kept as-is on purpose: it is indexed and linked, and
+ * changing it would 404 every existing link for no compliance gain. What changed
+ * is the *copy* — the page no longer calls DoctoGuide an "AI doctor" anywhere,
+ * because that phrasing implies a licensed practitioner and is what Google Ads
+ * treats as misrepresentation in a healthcare context. Every self-description on
+ * this page is now "AI health assistant", stated as an informational tool.
+ */
 @Component({
   selector: 'app-ai-doctor-page',
   template: `
     <app-seo-page-layout
-      heading="Your free AI doctor, available 24/7"
-      lede="Ask any health question in plain language and get an instant, easy-to-read answer — what could be going on, how urgent it is, and which specialist to see. Free, no sign-up."
-      ctaTitle="Ask the AI doctor anything"
+      heading="Your free AI health assistant, available 24/7"
+      lede="Ask any health question in plain language and get an instant, easy-to-read answer — what could be going on, how urgent it is, and which specialist to see. Free, no sign-up. Informational guidance only, not medical advice."
+      ctaTitle="Ask the AI health assistant anything"
       ctaLabel="Start free — no sign-up"
     >
-      <h2>What is an AI doctor?</h2>
+      <h2>What is an AI health assistant?</h2>
       <p>
-        An AI doctor is an artificial-intelligence health assistant that understands your symptoms
+        An AI health assistant is an artificial-intelligence tool that understands your symptoms
         and health questions the way you naturally describe them — no checkboxes, no medical
         jargon required. DoctoGuide reads your concern, asks sensible follow-up questions, and
         gives you a clear summary of what could be going on and what to do next.
       </p>
       <p>
-        <strong>To be clear: an AI doctor is not a real doctor.</strong> DoctoGuide provides
-        educational health information only. It does not diagnose, treat, or prescribe. What it
-        does well is help you understand your situation, decide how urgent it is, and point you to
-        the right specialist — so when you do see a doctor, it's the right one, on the first visit.
+        <strong>To be clear: an AI health assistant is not a doctor.</strong> DoctoGuide is not a
+        licensed medical practitioner and provides educational health information only. It does
+        not diagnose, treat, or prescribe. What it does well is help you understand your
+        situation, decide how urgent it is, and point you to the right specialist — so when you
+        do see a doctor, it's the right one, on the first visit.
       </p>
 
       <h2>What can you ask?</h2>
@@ -33,17 +42,17 @@ import { SeoService, SITE_URL } from '../core/seo.service';
         <li>"What does this value in my blood report mean?"</li>
       </ul>
 
-      <h2>AI doctor vs. a real doctor — when to use which</h2>
+      <h2>An AI health assistant vs. a doctor — when to use which</h2>
       <p>
         Use DoctoGuide when you're unsure whether something needs a doctor at all, when you don't
         know <a routerLink="/which-specialist-to-see">which specialist to see</a>, or when you want
-        to understand a report or medicine before an appointment. See a real doctor for anything
+        to understand a report or medicine before an appointment. See a doctor for anything
         persistent, worsening, or worrying — and for any diagnosis or treatment. For severe
         symptoms like chest pain with breathlessness, sudden weakness, or heavy bleeding, skip
         both and call your local emergency number.
       </p>
 
-      <h2>Why people use an AI doctor instead of searching online</h2>
+      <h2>Why people use an AI health assistant instead of searching online</h2>
       <p>
         A search engine gives you ten pages that range from "it's nothing" to "it's the worst
         case", and you're left to guess. DoctoGuide gives one calm, structured answer based on
@@ -53,15 +62,15 @@ import { SeoService, SITE_URL } from '../core/seo.service';
 
       <h2>Frequently asked questions</h2>
       <details>
-        <summary>Is the AI doctor really free?</summary>
+        <summary>Is the AI health assistant really free?</summary>
         <p>Yes. DoctoGuide is 100% free to start — no sign-up and no credit card needed.</p>
       </details>
       <details>
-        <summary>Can the AI doctor give me a diagnosis or prescription?</summary>
+        <summary>Can it give me a diagnosis or prescription?</summary>
         <p>
-          No. DoctoGuide is an information-only assistant. It explains what could be going on and
-          which specialist to consult, but diagnosis, treatment, and prescriptions always come
-          from a licensed physician.
+          No. DoctoGuide is an information-only assistant and is not a licensed physician. It
+          explains what could be going on and which specialist to consult, but diagnosis,
+          treatment, and prescriptions always come from a licensed physician.
         </p>
       </details>
       <details>
@@ -95,7 +104,7 @@ export class AiDoctorPageComponent implements OnInit, OnDestroy {
     this.seo.setJsonLd('page', {
       '@context': 'https://schema.org',
       '@type': 'MedicalWebPage',
-      name: 'Free AI Doctor Online',
+      name: 'Free AI Health Assistant Online',
       url: `${SITE_URL}/ai-doctor`,
       inLanguage: 'en',
       about: { '@type': 'MedicalAudience', audienceType: 'Patient' },
@@ -106,7 +115,7 @@ export class AiDoctorPageComponent implements OnInit, OnDestroy {
       mainEntity: [
         {
           '@type': 'Question',
-          name: 'Is the AI doctor really free?',
+          name: 'Is the AI health assistant really free?',
           acceptedAnswer: {
             '@type': 'Answer',
             text: 'Yes. DoctoGuide is 100% free to start — no sign-up and no credit card needed.',
@@ -114,15 +123,15 @@ export class AiDoctorPageComponent implements OnInit, OnDestroy {
         },
         {
           '@type': 'Question',
-          name: 'Can the AI doctor give me a diagnosis or prescription?',
+          name: 'Can DoctoGuide give me a diagnosis or prescription?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'No. DoctoGuide is an information-only assistant. It explains what could be going on and which specialist to consult, but diagnosis, treatment, and prescriptions always come from a licensed physician.',
+            text: 'No. DoctoGuide is an information-only assistant and is not a licensed physician. It explains what could be going on and which specialist to consult, but diagnosis, treatment, and prescriptions always come from a licensed physician.',
           },
         },
         {
           '@type': 'Question',
-          name: 'Does the AI doctor work in my country?',
+          name: 'Does the AI health assistant work in my country?',
           acceptedAnswer: {
             '@type': 'Answer',
             text: 'Yes. DoctoGuide works worldwide and can adapt guidance like emergency numbers and nearby-doctor search to your location.',

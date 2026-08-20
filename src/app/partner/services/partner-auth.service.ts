@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 
 // Clinic-admin session. Kept in localStorage under partner-scoped keys so it
-// never clashes with the patient (PIN) auth used by the AI Doctor app.
+// never clashes with the patient (PIN) auth used by the AI health assistant app.
 const LS_TOKEN = 'partnerToken';
 const LS_CLINIC_ID = 'partnerClinicId';
 const LS_CLINIC_NAME = 'partnerClinicName';

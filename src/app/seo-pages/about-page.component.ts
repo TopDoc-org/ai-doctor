@@ -16,7 +16,7 @@ import { LEGAL_CONFIG } from '../legal/legal-config';
   template: `
     <app-seo-page-layout
       heading="About DoctoGuide"
-      lede="DoctoGuide is a free AI health guide and symptom checker built by KnocDoc. It helps you understand what you're feeling, how urgent it might be, and which kind of doctor to see next."
+      lede="DoctoGuide is a free AI health assistant and symptom checker built by KnocDoc. It helps you understand what you're feeling, how urgent it might be, and which kind of doctor to see next."
       ctaTitle="See what DoctoGuide makes of your symptoms"
       ctaLabel="Try it free"
     >

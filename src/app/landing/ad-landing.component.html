@@ -1,0 +1,243 @@
+<!--
+  Paid-traffic landing page. Read the header comment in ad-landing.component.ts
+  before changing any copy here — the wording constraints are a Google Ads
+  personalised-advertising requirement, not a style preference.
+-->
+<div class="relative min-h-screen overflow-hidden bg-cream">
+  <!-- decorative blob -->
+  <div
+    class="pointer-events-none absolute left-1/2 top-0 -z-0 h-[420px] w-[420px] -translate-x-1/2 -translate-y-1/3 rounded-full opacity-40 blur-3xl"
+    style="background: radial-gradient(circle at 30% 30%, #2DD4BF, #0D9488 40%, #2563eb 80%);"
+  ></div>
+
+  <!-- nav: brand only. No links out to the symptom-led SEO pages. -->
+  <header class="relative z-10">
+    <nav aria-label="Primary" class="mx-auto flex max-w-5xl items-center justify-between gap-2 px-5 py-5 sm:px-6">
+      <div class="flex min-w-0 shrink flex-col leading-tight">
+        <div class="flex items-center gap-1 truncate font-heading text-xl font-extrabold text-teal-900 sm:text-2xl">
+          <span class="truncate">{{ appName }}</span>
+          <span class="material-icons shrink-0 text-teal-500" style="font-size:18px">auto_awesome</span>
+        </div>
+        <span class="flex items-center gap-1 truncate text-[11px] font-semibold text-teal-900/50">
+          powered by
+          <span class="font-extrabold"><span style="color:#0a1480">Knoc</span><span style="color:#4fb0f9">Doc</span></span>
+        </span>
+      </div>
+      <button
+        (click)="start('hero')"
+        class="rounded-full bg-teal-900 px-4 py-1.5 text-sm font-medium text-white hover:bg-teal-700"
+      >Start free</button>
+    </nav>
+  </header>
+
+  <main class="relative z-10 mx-auto max-w-5xl px-5 pb-16 sm:px-6">
+    <!-- hero -->
+    <section class="mx-auto max-w-3xl pt-6 text-center md:pt-10">
+      <h1 class="font-display text-[2rem] leading-[1.1] text-teal-900 sm:text-5xl">
+        Know <span class="italic">which doctor</span> to see<br class="hidden sm:block" />
+        before you book
+      </h1>
+      <p class="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-teal-900/75 sm:text-lg">
+        {{ appName }} is a free guided assistant from KnocDoc. Answer a few questions in plain
+        language and it points you to the speciality that fits — then shows you doctors near you.
+        No sign-up, no card.
+      </p>
+
+      <div class="mt-7 flex flex-col items-center gap-3">
+        <button
+          (click)="start('hero')"
+          class="flex w-full max-w-xs items-center justify-center gap-1.5 rounded-xl bg-teal-600 px-8 py-3.5 text-base font-semibold text-white shadow-lg transition-colors hover:bg-teal-700 sm:w-auto"
+        >
+          Start free
+          <span class="material-icons" style="font-size:19px">arrow_forward</span>
+        </button>
+        <p class="text-sm text-teal-900/60">Takes about two minutes.</p>
+        <!-- Upfront disclaimer, directly under the primary CTA. -->
+        <p class="mx-auto max-w-lg text-xs leading-relaxed text-teal-900/55">
+          For informational and educational guidance only. Not medical advice or a formal
+          diagnosis. In an emergency, please contact your local emergency services.
+        </p>
+      </div>
+
+      <!-- zero-friction pills -->
+      <div class="mt-8 flex flex-wrap items-center justify-center gap-2.5">
+        <span class="flex items-center gap-1.5 rounded-full border border-teal-200 bg-white px-4 py-2 text-sm font-semibold text-teal-800 shadow-sm">
+          <span class="material-icons text-teal-600" style="font-size:18px">check_circle</span> Free to use
+        </span>
+        <span class="flex items-center gap-1.5 rounded-full border border-teal-200 bg-white px-4 py-2 text-sm font-semibold text-teal-800 shadow-sm">
+          <span class="material-icons text-teal-600" style="font-size:18px">how_to_reg</span> No sign-up
+        </span>
+        <span class="flex items-center gap-1.5 rounded-full border border-teal-200 bg-white px-4 py-2 text-sm font-semibold text-teal-800 shadow-sm">
+          <span class="material-icons text-teal-600" style="font-size:18px">credit_card_off</span> No credit card
+        </span>
+        <span class="flex items-center gap-1.5 rounded-full bg-teal-600 px-4 py-2 text-sm font-semibold text-white shadow-md">
+          <span class="material-icons" style="font-size:18px">translate</span> Works in any language
+        </span>
+      </div>
+    </section>
+
+    <!-- how it works -->
+    <section class="mt-16">
+      <h2 class="text-center font-heading text-2xl font-bold text-teal-900">How it works</h2>
+      <div class="mt-7 grid gap-4 sm:grid-cols-3">
+        <div
+          *ngFor="let s of steps; let i = index"
+          class="rounded-2xl border border-teal-100 bg-white/70 p-5 text-left"
+        >
+          <div class="flex items-center gap-2">
+            <span class="flex h-9 w-9 items-center justify-center rounded-full bg-teal-50 text-teal-600">
+              <span class="material-icons" style="font-size:20px">{{ s.icon }}</span>
+            </span>
+            <span class="font-heading text-xs font-bold uppercase tracking-wide text-teal-900/40">
+              Step {{ i + 1 }}
+            </span>
+          </div>
+          <p class="mt-3 font-heading text-base font-bold text-teal-900">{{ s.title }}</p>
+          <p class="mt-1.5 font-body text-sm leading-relaxed text-teal-900/70">{{ s.text }}</p>
+        </div>
+      </div>
+
+      <div class="mt-8 text-center">
+        <button
+          (click)="start('mid')"
+          class="inline-flex items-center gap-1.5 rounded-xl bg-teal-600 px-7 py-3 text-sm font-semibold text-white hover:bg-teal-700"
+        >
+          Start free
+          <span class="material-icons" style="font-size:18px">arrow_forward</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- why -->
+    <section class="mt-16">
+      <h2 class="text-center font-heading text-2xl font-bold text-teal-900">Why people use it</h2>
+      <div class="mt-7 grid gap-4 sm:grid-cols-3">
+        <div
+          *ngFor="let r of reasons"
+          class="rounded-2xl border border-teal-100 bg-white/70 p-5 text-left"
+        >
+          <span class="material-icons text-teal-600" style="font-size:22px">{{ r.icon }}</span>
+          <p class="mt-2.5 font-heading text-base font-bold text-teal-900">{{ r.title }}</p>
+          <p class="mt-1.5 font-body text-sm leading-relaxed text-teal-900/70">{{ r.text }}</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- what it is / is not — required by the medical disclaimer, written
+         without naming a single condition or clinical activity in the negative. -->
+    <section class="mx-auto mt-16 max-w-2xl">
+      <h2 class="font-heading text-2xl font-bold text-teal-900">What {{ appName }} is</h2>
+      <p class="mt-3 font-body text-[15px] leading-relaxed text-teal-900/70">
+        An information and navigation tool. It helps you understand which kind of practitioner
+        fits your situation, gives you a written summary to carry to the consultation, and helps
+        you find doctors nearby. It is built and operated by KnocDoc.
+      </p>
+      <p class="mt-3 font-body text-[15px] leading-relaxed text-teal-900/70">
+        It is <strong class="text-teal-900">not</strong> a licensed physician and does not replace
+        one. It does not provide medical advice, diagnosis, treatment, or prescriptions, and it
+        cannot examine you or order tests. Use it to arrive at a consultation better prepared —
+        never instead of one.
+      </p>
+      <p class="mt-3 font-body text-[15px] leading-relaxed text-teal-900/70">
+        For adults 18 and over. Read the
+        <a routerLink="/disclaimer" class="text-teal-700 underline">medical disclaimer</a>,
+        <a routerLink="/terms" class="text-teal-700 underline">terms of use</a>, and
+        <a routerLink="/privacy" class="text-teal-700 underline">privacy policy</a>.
+      </p>
+    </section>
+
+    <!-- FAQ: product and pricing questions only. No clinical questions. -->
+    <section class="mx-auto mt-14 max-w-2xl">
+      <h2 class="font-heading text-2xl font-bold text-teal-900">Common questions</h2>
+      <div class="mt-4 space-y-3">
+        <details class="rounded-2xl border border-teal-200 bg-white/70 p-4">
+          <summary class="cursor-pointer font-heading text-base font-semibold text-teal-900">
+            Is it really free?
+          </summary>
+          <p class="mt-2 font-body text-sm leading-relaxed text-teal-900/70">
+            Yes. There is no charge, no subscription, and no credit card. You can start without
+            creating an account.
+          </p>
+        </details>
+        <details class="rounded-2xl border border-teal-200 bg-white/70 p-4">
+          <summary class="cursor-pointer font-heading text-base font-semibold text-teal-900">
+            Do I have to create an account?
+          </summary>
+          <p class="mt-2 font-body text-sm leading-relaxed text-teal-900/70">
+            No. An account is only needed if you want to keep your written summary and come back
+            to it later.
+          </p>
+        </details>
+        <details class="rounded-2xl border border-teal-200 bg-white/70 p-4">
+          <summary class="cursor-pointer font-heading text-base font-semibold text-teal-900">
+            Which languages does it understand?
+          </summary>
+          <p class="mt-2 font-body text-sm leading-relaxed text-teal-900/70">
+            Type the way you talk — English, हिन्दी, Hinglish, or another language — and it replies
+            in the same language you used.
+          </p>
+        </details>
+        <details class="rounded-2xl border border-teal-200 bg-white/70 p-4">
+          <summary class="cursor-pointer font-heading text-base font-semibold text-teal-900">
+            Is this a consultation?
+          </summary>
+          <p class="mt-2 font-body text-sm leading-relaxed text-teal-900/70">
+            No. {{ appName }} is an information tool, not a consultation and not a telemedicine
+            service. Whoever you decide to see is your own choice, booked directly with them.
+          </p>
+        </details>
+        <details class="rounded-2xl border border-teal-200 bg-white/70 p-4">
+          <summary class="cursor-pointer font-heading text-base font-semibold text-teal-900">
+            What happens to what I type?
+          </summary>
+          <p class="mt-2 font-body text-sm leading-relaxed text-teal-900/70">
+            You are asked to agree before anything is processed, and you can read exactly what is
+            kept and for how long in the
+            <a routerLink="/privacy" class="text-teal-700 underline">privacy policy</a>.
+          </p>
+        </details>
+      </div>
+    </section>
+
+    <!-- closing CTA -->
+    <section class="mx-auto mt-14 max-w-2xl rounded-2xl border border-teal-200 bg-teal-50/80 p-7 text-center">
+      <p class="font-heading text-lg font-bold text-teal-900">Not sure who to book?</p>
+      <p class="mt-1 text-sm text-teal-900/70">Free. No sign-up, no credit card. About two minutes.</p>
+      <button
+        (click)="start('foot')"
+        class="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-teal-600 px-7 py-3 text-sm font-semibold text-white hover:bg-teal-700"
+      >
+        Start free
+        <span class="material-icons" style="font-size:18px">arrow_forward</span>
+      </button>
+    </section>
+
+    <!-- Safety notice. Deliberately no list of warning signs: naming them would
+         put condition vocabulary back on the page. The full list stays one click
+         away on /medical-safety, which paid traffic does not land on. -->
+    <p class="mx-auto mt-12 max-w-2xl text-center text-xs leading-relaxed text-teal-900/50">
+      {{ appName }} is an information assistant, not a licensed physician, and does not provide
+      medical advice, diagnosis, treatment, or prescriptions. Do not use it to decide whether a
+      situation is urgent. In a medical emergency, call {{ emergencyNumbersText }} immediately, or
+      go to the nearest hospital.
+    </p>
+
+    <footer class="mx-auto mt-8 max-w-2xl border-t border-black/5 pt-4 text-center text-xs text-teal-900/50">
+      <a routerLink="/privacy" class="hover:text-teal-700">Privacy Policy</a>
+      <span class="mx-2">·</span>
+      <a routerLink="/terms" class="hover:text-teal-700">Terms of Use</a>
+      <span class="mx-2">·</span>
+      <a routerLink="/disclaimer" class="hover:text-teal-700">Medical Disclaimer</a>
+      <span class="mx-2">·</span>
+      <a routerLink="/contact" class="hover:text-teal-700">Contact</a>
+
+      <p class="mt-3 leading-relaxed">
+        {{ appName }} is operated by <strong class="font-semibold text-teal-900/70">KnocDoc</strong>.
+        Support:
+        <a href="mailto:support@knocdoc.in" class="underline hover:text-teal-700">support&#64;knocdoc.in</a>
+        ·
+        <a href="https://knocdoc.in/" target="_blank" rel="noopener" class="underline hover:text-teal-700">knocdoc.in</a>
+      </p>
+    </footer>
+  </main>
+</div>

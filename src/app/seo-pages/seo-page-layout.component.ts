@@ -62,6 +62,17 @@ import { environment } from '../../environments/environment';
           <a routerLink="/terms" class="hover:text-teal-700">Terms of Use</a>
           <span class="mx-2">·</span>
           <a routerLink="/disclaimer" class="hover:text-teal-700">Medical Disclaimer</a>
+          <span class="mx-2">·</span>
+          <a routerLink="/contact" class="hover:text-teal-700">Contact</a>
+
+          <!-- Who operates the site and how to reach them, on every public page. -->
+          <p class="mt-3 leading-relaxed">
+            {{ appName }} is operated by
+            <strong class="font-semibold text-teal-900/70">KnocDoc</strong>. Support:
+            <a href="mailto:support@knocdoc.in" class="underline hover:text-teal-700">support&#64;knocdoc.in</a>
+            ·
+            <a href="https://knocdoc.in/" target="_blank" rel="noopener" class="underline hover:text-teal-700">knocdoc.in</a>
+          </p>
         </footer>
       </main>
     </div>
@@ -80,7 +91,7 @@ export class SeoPageLayoutComponent {
   // Cross-links between the public SEO pages (crawl path + UX).
   links = [
     { path: '/', label: 'Home' },
-    { path: '/ai-doctor', label: 'AI Doctor' },
+    { path: '/ai-doctor', label: 'AI Health Assistant' },
     { path: '/symptom-checker', label: 'Symptom Checker' },
     { path: '/which-specialist-to-see', label: 'Which Specialist to See' },
     { path: '/health-topics', label: 'Health Topics' },

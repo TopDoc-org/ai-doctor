@@ -17,7 +17,6 @@ export class LandingComponent implements OnInit, OnDestroy {
   query = '';
   placeholder = '';
   countryName: string | null = null;
-  emergencyNumbers = environment.emergencyNumbers;
   instagramUrl = environment.instagram.url;
   instagramHandle = environment.instagram.handle;
 
@@ -107,6 +106,18 @@ export class LandingComponent implements OnInit, OnDestroy {
     return this.countryName ? `You are in ${this.countryName}` : 'Available worldwide';
   }
 
+  // Emergency copy comes from CountryService, never from raw numbers stitched
+  // into the template: it deduplicates countries where the all-emergencies and
+  // ambulance numbers are the same (which used to render "call 911 or 911"),
+  // and falls back to neutral "your local emergency services (112 / 911)" text
+  // while the country is unknown — including in the prerendered HTML.
+  get emergencySentence(): string {
+    return this.country.emergencySentence;
+  }
+  get emergencyNumbersText(): string {
+    return this.country.emergencyNumbersText;
+  }
+
   // Country-aware copy with neutral fallbacks when the country is unknown.
   // e.g. "India's" / "Your", and "built for India" / "built for you".
   get countryPossessive(): string {
@@ -115,9 +126,11 @@ export class LandingComponent implements OnInit, OnDestroy {
   get countryForCopy(): string {
     return this.countryName || 'you';
   }
-  // " in India" when known, "" otherwise — used inline mid-sentence.
+  // " in India" / " in the United States" when known, "" otherwise — used
+  // inline mid-sentence. Delegated so the definite-article handling lives in
+  // one place.
   get inCountry(): string {
-    return this.countryName ? ` in ${this.countryName}` : '';
+    return this.country.inCountry;
   }
 
   ngOnInit(): void {
@@ -136,7 +149,6 @@ export class LandingComponent implements OnInit, OnDestroy {
     // Resolve country context (IP-based, cached) for the location banner.
     this.country.init().then(() => {
       this.countryName = this.country.countryName;
-      this.emergencyNumbers = this.country.emergencyNumbers;
     });
   }
 
@@ -160,7 +172,7 @@ export class LandingComponent implements OnInit, OnDestroy {
         },
         {
           '@type': 'Question',
-          name: 'Is this an AI doctor or real medical advice?',
+          name: 'Is DoctoGuide medical advice?',
           acceptedAnswer: {
             '@type': 'Answer',
             text: 'DoctoGuide is an AI health-information assistant, not a licensed physician. It gives educational information and suggests which specialist to see, but it does not provide a diagnosis, treatment, or prescription. In an emergency, call your local emergency number (for example 911, 112, or 999).',

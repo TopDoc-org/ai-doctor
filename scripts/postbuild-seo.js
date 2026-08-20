@@ -19,8 +19,12 @@ const { execSync } = require('child_process');
 const SITE_URL = 'https://doctoguide.knocdoc.in';
 const OUT_DIR = path.resolve(__dirname, '..', 'dist', 'AIDoctorFront', 'browser');
 
-/** Routes that must never appear in the sitemap, even if prerendered. */
-const EXCLUDED = new Set(['/404']);
+/**
+ * Routes that must never appear in the sitemap, even if prerendered.
+ * `/start` is the Google Ads landing page: prerendered so AdsBot sees real
+ * HTML, but noindex and never submitted for organic indexing.
+ */
+const EXCLUDED = new Set(['/404', '/start']);
 
 /** Priority by route. Anything unlisted falls back to DEFAULT_PRIORITY. */
 const PRIORITY = {

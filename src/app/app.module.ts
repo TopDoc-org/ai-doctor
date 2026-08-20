@@ -11,6 +11,7 @@ import { AppRoutingModule } from './app-routing.module';
 import { SeoPagesModule } from './seo-pages/seo-pages.module';
 import { AppComponent } from './app.component';
 import { LandingComponent } from './landing/landing.component';
+import { AdLandingComponent } from './landing/ad-landing.component';
 import { LegalLayoutComponent } from './legal/legal-layout.component';
 import { PrivacyComponent } from './legal/privacy.component';
 import { TermsComponent } from './legal/terms.component';
@@ -21,6 +22,7 @@ import { TypingAnimationComponent } from './shared/typing-animation/typing-anima
   declarations: [
     AppComponent,
     LandingComponent,
+    AdLandingComponent,
     LegalLayoutComponent,
     PrivacyComponent,
     TermsComponent,

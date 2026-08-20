@@ -26,9 +26,9 @@ export interface SeoData {
 }
 
 const DEFAULTS: Required<SeoData> = {
-  title: 'DoctoGuide — AI Health Guide & Free Symptom Checker | KnocDoc',
+  title: 'DoctoGuide — AI Health Assistant & Symptom Checker | KnocDoc',
   description:
-    `DoctoGuide is a free AI health guide and symptom checker by KnocDoc. Describe your symptoms, understand possible explanations and urgency, and learn which specialist to see in ${COUNTRY_TOKEN}. No sign-up.`,
+    `DoctoGuide is a free AI health assistant and symptom checker by KnocDoc. Describe your symptoms, understand possible explanations and urgency, and learn which specialist to see in ${COUNTRY_TOKEN}. No sign-up.`,
   robots: 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1',
   image: `${SITE_URL}/assets/og-image.png`,
 };
