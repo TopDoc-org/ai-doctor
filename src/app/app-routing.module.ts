@@ -61,8 +61,11 @@ const routes: Routes = [
     data: {
       seo: {
         title: 'DoctoGuide — Know Which Doctor to See | KnocDoc',
+        // Directory framing, matching the page copy. No symptom vocabulary: this
+        // string ships in <meta name="description"> and og:description on the ad
+        // landing page. See ADS_COMPLIANCE_PLAN.md 3.3.
         description:
-          'Free guided assistant from KnocDoc. Answer a few questions in plain language, get pointed to the right speciality, and find doctors near you. No sign-up, no card.',
+          'Free tool from KnocDoc. Tell it what you are looking for in plain language and narrow down which type of doctor to book with, then find doctors near you. No sign-up, no card.',
         robots: 'noindex,nofollow',
       },
     },

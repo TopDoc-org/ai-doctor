@@ -144,6 +144,35 @@ function main() {
     }
   }
 
+  // --- scrub the ad landing page ---------------------------------------------
+  // index.html carries a site-wide JSON-LD @graph (WebSite + SoftwareApplication)
+  // whose descriptions say "symptom checker", "Describe your symptoms",
+  // "MedicalAudience", "HealthApplication". Angular copies that <head> into every
+  // prerendered route, so it lands on /start too — a machine-readable
+  // personal-health signal on the one page that exists to carry none
+  // (ADS_COMPLIANCE_PLAN.md 3.3). The block is valuable everywhere else, so it is
+  // removed here rather than deleted from src/index.html.
+  const startPage = path.join(OUT_DIR, 'start', 'index.html');
+  if (fs.existsSync(startPage)) {
+    const before = fs.readFileSync(startPage, 'utf8');
+    const after = before.replace(
+      /<script type="application\/ld\+json">[\s\S]*?<\/script>\s*/g,
+      '',
+    );
+    if (after === before) {
+      console.warn('[postbuild-seo] /start carried no JSON-LD to strip — check src/index.html.');
+    } else {
+      fs.writeFileSync(startPage, after, 'utf8');
+      console.log('[postbuild-seo] stripped site-wide JSON-LD from /start (ad landing page).');
+    }
+    if (/symptom|diagnose|MedicalAudience|HealthApplication/i.test(after.replace(/does not provide medical advice, diagnosis[^<]*/gi, ''))) {
+      console.error('[postbuild-seo] FAIL: /start still contains personal-health vocabulary. See ADS_COMPLIANCE_PLAN.md 3.3.');
+      process.exit(1);
+    }
+  } else {
+    console.warn('[postbuild-seo] /start was not prerendered — the Ads landing page is missing.');
+  }
+
   // --- sanity check ----------------------------------------------------------
   // A prerender that silently produced empty shells is the exact failure this
   // whole pipeline exists to prevent, so fail the build rather than deploy it.

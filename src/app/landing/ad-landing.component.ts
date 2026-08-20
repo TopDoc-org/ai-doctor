@@ -52,17 +52,18 @@ export class AdLandingComponent implements OnInit, OnDestroy {
 
   /**
    * Rotating placeholder examples. These are NOT LandingComponent.useCases and
-   * must never be replaced by them: every line here is about *navigating to the
-   * right doctor*, and none names a condition, symptom, medicine, lab report or
-   * body part, in any language. Anything else puts this paid landing page back
-   * into Google's health interest category (ADS_COMPLIANCE_PLAN.md 3.3).
+   * must never be replaced by them. Every line asks which *kind of doctor* the
+   * visitor wants — the directory question — and none names a condition,
+   * symptom, medicine, lab report or body part, in any language. Anything else
+   * puts this paid landing page back into Google's health interest category
+   * (ADS_COMPLIANCE_PLAN.md 3.3).
    */
   useCases = [
-    'Which speciality should I book first?',
-    'Help me find the right doctor near me',
-    'Mujhe kis doctor se milna chahiye?',
-    'What should I ask at my next appointment?',
-    'मुझे किस विशेषज्ञ के पास जाना चाहिए?',
+    'What kind of doctor are you looking for?',
+    'Which type of doctor should I book with?',
+    'Mujhe kis type ke doctor ko dhundhna chahiye?',
+    'Show me the specialities available near me',
+    'मुझे किस तरह के डॉक्टर की तलाश है?',
     'Find doctors close by, open today',
   ];
 
@@ -85,13 +86,13 @@ export class AdLandingComponent implements OnInit, OnDestroy {
   steps = [
     {
       icon: 'forum',
-      title: 'Answer a few questions',
+      title: 'Tell us what you need',
       text: 'A short guided conversation, in your own words. English, हिन्दी, Hinglish — or any other language you prefer.',
     },
     {
       icon: 'alt_route',
-      title: 'Get pointed to the right speciality',
-      text: 'So the first appointment you book is with the kind of doctor who can actually help, not a referral away from it.',
+      title: 'See which specialities could fit',
+      text: 'Browse the doctor specialities that could be relevant, so you know your options before you book.',
     },
     {
       icon: 'place',
@@ -103,13 +104,13 @@ export class AdLandingComponent implements OnInit, OnDestroy {
   reasons = [
     {
       icon: 'schedule',
-      title: 'Fewer wasted appointments',
-      text: 'A visit to the wrong speciality costs a fee, a day, and a wait for the next one.',
+      title: 'Save yourself a guess',
+      text: 'Skip picking a speciality at random from a list — narrow it down first.',
     },
     {
       icon: 'description',
-      title: 'Walk in prepared',
-      text: 'You leave with a short written summary you can hand to whoever you see.',
+      title: 'Come in with a clear ask',
+      text: "Leave with a short note of what you searched for, to reference if it's useful.",
     },
     {
       icon: 'payments',
