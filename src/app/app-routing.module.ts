@@ -20,6 +20,7 @@ import { HealthTopicsIndexComponent } from './seo-pages/health-topics-index.comp
 import { HealthTopicPageComponent } from './seo-pages/health-topic-page.component';
 import { NotFoundComponent } from './seo-pages/not-found.component';
 import { HEALTH_TOPICS } from './seo-pages/health-topics.data';
+import { SITE_URL } from './core/seo.service';
 
 /**
  * One route per health topic, generated from the hand-written content list.
@@ -69,6 +70,12 @@ const routes: Routes = [
         description:
           'Free tool from KnocDoc. Tell it what you are looking for in plain language, see which options could fit, and find listings near you. No sign-up, no card.',
         robots: 'noindex,nofollow',
+        // The default social card (assets/og-image.png) names the product a
+        // symptom checker, which is accurate for the organic site but is exactly
+        // the vocabulary this page avoids — og:image is meta content on the page
+        // AdsBot crawls. og-start.png carries the same brand treatment with no
+        // health, symptom or condition wording. See ADS_COMPLIANCE_PLAN.md 3.3/3.6.
+        image: `${SITE_URL}/assets/og-start.png`,
       },
     },
   },
