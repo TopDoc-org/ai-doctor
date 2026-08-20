@@ -126,12 +126,18 @@ Banned on `/start` (and on any future ad landing page or ad creative):
 - Chronic conditions and their management; disability; carer-of framing.
 - "Diagnosis", "diagnose", "triage", "AI doctor", "symptom checker".
 - Free-text field *wording* that invites a health complaint. `/start` does carry a hero
-  entry box with a rotating placeholder, but every string in it is health-neutral:
-  label "Start in your own words", aria-label "Type your first message to begin", and
-  placeholders about choosing a speciality and finding a doctor nearby
-  (`AdLandingComponent.useCases`). The homepage's example queries — antacids, sore
-  throat, "pet me dard", chest pain, बुखार, rash, headache — must never be copied in;
-  they render into the DOM and are exactly the signal this page avoids.
+  entry box with a rotating placeholder, but every string in it asks which **kind of
+  doctor** the visitor wants, never what is wrong with them: label "What kind of doctor
+  are you looking for?", aria-label "Tell us what kind of doctor you are looking for",
+  and directory-framed placeholders (`AdLandingComponent.useCases`). The homepage's
+  example queries — antacids, sore throat, "pet me dard", chest pain, बुखार, rash,
+  headache — must never be copied in; they render into the DOM and are exactly the
+  signal this page avoids.
+- Framing the product as a triage or preparation aid rather than a **directory**. The page
+  copy says it helps you *narrow down which type of doctor to book with* and *explore your
+  options* — not that it works out what fits your situation or gets you ready for a
+  consultation. "A directory tool, not medical advice." sits above the fold for the same
+  reason.
 - FAQ/JSON-LD entries phrased as clinical questions.
 
 Kept, because safety and the medical disclaimer require them:
