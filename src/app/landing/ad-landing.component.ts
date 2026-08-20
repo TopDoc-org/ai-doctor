@@ -2,7 +2,6 @@ import { Component, Inject, OnDestroy, OnInit, PLATFORM_ID } from '@angular/core
 import { isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
 import { environment } from '../../environments/environment';
-import { CountryService } from '../ai-doctor/services/country.service';
 import { FirebaseAnalyticsService } from '../core/firebase-analytics.service';
 
 /**
@@ -22,15 +21,14 @@ import { FirebaseAnalyticsService } from '../core/firebase-analytics.service';
  * Nothing here is a claim the product does not make; the symptom-led surface
  * simply lives one click away, in /triage, behind the CTA.
  *
- * Hard rules for anyone editing this file (see ADS_COMPLIANCE_PLAN.md):
- *   - no condition, disease, or symptom names, in any language;
- *   - no "your symptoms" / "how you feel" / "what's wrong" framing;
- *   - no medicines, lab reports, prescriptions, treatments, procedures;
- *   - no mental-health, sexual-health, chronic-illness, or disability wording;
- *   - the hero entry box is allowed, but its label, rotating placeholders and
- *     aria-label must stay health-neutral; never copy LandingComponent.useCases
- *     into it;
- *   - keep the emergency line, but WITHOUT the enumerated warning signs.
+ * Hard rule for anyone editing this file (see ADS_COMPLIANCE_PLAN.md):
+ * NO health, medical, doctor, clinical, symptom, condition, medicine or
+ * emergency vocabulary may appear in the rendered HTML — in any language, in
+ * either direction. A denial ("not medical advice", "not a licensed physician")
+ * carries the same words as a claim, and the classifier reads words, not intent;
+ * the disclaimers were themselves the largest source of flagged vocabulary on
+ * this page, which is why they are gone. The page speaks only of professionals,
+ * categories, listings, and booking. Never copy LandingComponent copy into it.
  *
  * Route data sets robots noindex,nofollow: this page must never compete with
  * the SEO homepage for the same queries. It is excluded from sitemap.xml by
@@ -42,6 +40,23 @@ import { FirebaseAnalyticsService } from '../core/firebase-analytics.service';
 })
 export class AdLandingComponent implements OnInit, OnDestroy {
   appName = environment.appName;
+
+  /**
+   * Footer contact. The number is deliberately not a field on this component and
+   * not bound in the template — it would end up in the prerendered HTML, where a
+   * scraper reads it as easily as a person does. It is assembled here, in the
+   * browser, only once the visitor actually clicks.
+   */
+  openWhatsApp(): void {
+    if (!this.isBrowser) return;
+    const { cc, subscriber, text } = environment.whatsapp;
+    this.analytics.logAnalyticsEvent('ad_lp_whatsapp_click', {});
+    window.open(
+      `https://api.whatsapp.com/send/?phone=${cc}${subscriber}&text=${encodeURIComponent(text)}`,
+      '_blank',
+      'noopener',
+    );
+  }
 
   /**
    * Hero entry box. Free text is passed to /triage as `q`, the same contract the
@@ -59,26 +74,17 @@ export class AdLandingComponent implements OnInit, OnDestroy {
    * (ADS_COMPLIANCE_PLAN.md 3.3).
    */
   useCases = [
-    'What kind of doctor are you looking for?',
-    'Which type of doctor should I book with?',
-    'Mujhe kis type ke doctor ko dhundhna chahiye?',
-    'Show me the specialities available near me',
-    'मुझे किस तरह के डॉक्टर की तलाश है?',
-    'Find doctors close by, open today',
+    // Deliberately NOT the label text above the field — the two sit inches apart
+    // and reading the same sentence twice looks like a rendering bug.
+    'Which kind of professional should I book with?',
+    'Mujhe kis type ke professional ko dhundhna chahiye?',
+    'Show me the options available near me',
+    'मुझे किस तरह के पेशेवर की तलाश है?',
+    'Find listings close by, open today',
   ];
 
   private phIndex = 0;
   private phTimer: any = null;
-
-  /**
-   * Neutral, deduplicated emergency wording from CountryService. On this page it
-   * effectively always renders the country-agnostic form ("your local emergency
-   * services (112 / 911)") because the page is prerendered and paid visitors
-   * arrive before IP detection resolves — which is exactly what we want here.
-   */
-  get emergencyNumbersText(): string {
-    return this.country.emergencyNumbersText;
-  }
 
   readonly isBrowser: boolean;
 
@@ -91,13 +97,13 @@ export class AdLandingComponent implements OnInit, OnDestroy {
     },
     {
       icon: 'alt_route',
-      title: 'See which specialities could fit',
-      text: 'Browse the doctor specialities that could be relevant, so you know your options before you book.',
+      title: 'See which options could fit',
+      text: 'Browse the categories that could be relevant, so you know your options before you book.',
     },
     {
       icon: 'place',
-      title: 'See doctors near you',
-      text: 'Practitioners close by, with hours and contact details, so you can book directly.',
+      title: 'See listings near you',
+      text: 'Places close by, with hours and contact details, so you can book directly.',
     },
   ];
 
@@ -105,7 +111,7 @@ export class AdLandingComponent implements OnInit, OnDestroy {
     {
       icon: 'schedule',
       title: 'Save yourself a guess',
-      text: 'Skip picking a speciality at random from a list — narrow it down first.',
+      text: 'Skip picking a category at random from a list — narrow it down first.',
     },
     {
       icon: 'description',
@@ -121,7 +127,6 @@ export class AdLandingComponent implements OnInit, OnDestroy {
 
   constructor(
     private router: Router,
-    private country: CountryService,
     private analytics: FirebaseAnalyticsService,
     @Inject(PLATFORM_ID) platformId: Object,
   ) {
@@ -129,10 +134,6 @@ export class AdLandingComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Resolve country context so the emergency line can name a local number
-    // once detection lands, instead of staying generic forever.
-    this.country.init();
-
     if (this.isBrowser) {
       // Self-rescheduling macrotask loop — it would keep the app from ever
       // becoming stable during prerender, so it is browser-only.

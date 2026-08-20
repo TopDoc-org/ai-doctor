@@ -235,6 +235,20 @@ export class LandingComponent implements OnInit, OnDestroy {
     this.phTimer = setTimeout(() => this.typePlaceholder(), 250);
   }
 
+  /**
+   * Footer contact. Assembled at click time rather than bound in the template, so
+   * the number never appears in the prerendered HTML for scrapers to harvest.
+   */
+  openWhatsApp(): void {
+    if (!this.isBrowser) return;
+    const { cc, subscriber, text } = environment.whatsapp;
+    window.open(
+      `https://api.whatsapp.com/send/?phone=${cc}${subscriber}&text=${encodeURIComponent(text)}`,
+      '_blank',
+      'noopener',
+    );
+  }
+
   start() {
     const q = (this.query || '').trim();
     this.router.navigate(['/triage'], {

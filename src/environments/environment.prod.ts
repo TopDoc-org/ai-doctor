@@ -10,6 +10,15 @@ export const environment = {
   emergencyNumbers: { all: '112', ambulance: '112' },
   // Social handle, shown in the landing footer and in the post-report follow ask.
   instagram: { handle: '@knocdoc_health', url: 'https://www.instagram.com/knocdoc_health' },
+  // Support WhatsApp. Split into parts so the full number is not one searchable
+  // literal, and never bound into a template: the pages render an icon-only button
+  // and assemble the link at click time (see openWhatsApp() in the landing
+  // components), so no phone number reaches the prerendered HTML.
+  whatsapp: {
+    cc: '91',
+    subscriber: '9437975834',
+    text: 'Hi, I would like to know more about DoctoGuide.',
+  },
   firebaseConfig: {
     apiKey: 'AIzaSyAv9k9_NriTCecvSmDX5RirInV2aMvPmlY',
     authDomain: 'doctoguide-a36c9.firebaseapp.com',

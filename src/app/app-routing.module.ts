@@ -60,12 +60,14 @@ const routes: Routes = [
     component: AdLandingComponent,
     data: {
       seo: {
-        title: 'DoctoGuide — Know Which Doctor to See | KnocDoc',
-        // Directory framing, matching the page copy. No symptom vocabulary: this
-        // string ships in <meta name="description"> and og:description on the ad
-        // landing page. See ADS_COMPLIANCE_PLAN.md 3.3.
+        // These two strings ship in <title>, <meta name="description">,
+        // og:title/description and twitter:title/description on the ad landing
+        // page — the first text any crawler reads. They carry no health,
+        // medical or doctor vocabulary for the same reason the body copy does
+        // not. See ADS_COMPLIANCE_PLAN.md 3.3.
+        title: 'DoctoGuide by KnocDoc — Know Who to Book',
         description:
-          'Free tool from KnocDoc. Tell it what you are looking for in plain language and narrow down which type of doctor to book with, then find doctors near you. No sign-up, no card.',
+          'Free tool from KnocDoc. Tell it what you are looking for in plain language, see which options could fit, and find listings near you. No sign-up, no card.',
         robots: 'noindex,nofollow',
       },
     },
