@@ -125,7 +125,13 @@ Banned on `/start` (and on any future ad landing page or ad creative):
 - Mental health, sexual health, fertility/pregnancy, addiction, self-harm.
 - Chronic conditions and their management; disability; carer-of framing.
 - "Diagnosis", "diagnose", "triage", "AI doctor", "symptom checker".
-- Any free-text field inviting a health complaint.
+- Free-text field *wording* that invites a health complaint. `/start` does carry a hero
+  entry box with a rotating placeholder, but every string in it is health-neutral:
+  label "Start in your own words", aria-label "Type your first message to begin", and
+  placeholders about choosing a speciality and finding a doctor nearby
+  (`AdLandingComponent.useCases`). The homepage's example queries — antacids, sore
+  throat, "pet me dard", chest pain, बुखार, rash, headache — must never be copied in;
+  they render into the DOM and are exactly the signal this page avoids.
 - FAQ/JSON-LD entries phrased as clinical questions.
 
 Kept, because safety and the medical disclaimer require them:

@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit, PLATFORM_ID } from '@angular/core';
+import { Component, Inject, OnDestroy, OnInit, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
 import { environment } from '../../environments/environment';
@@ -27,7 +27,9 @@ import { FirebaseAnalyticsService } from '../core/firebase-analytics.service';
  *   - no "your symptoms" / "how you feel" / "what's wrong" framing;
  *   - no medicines, lab reports, prescriptions, treatments, procedures;
  *   - no mental-health, sexual-health, chronic-illness, or disability wording;
- *   - no free-text field that invites a health complaint;
+ *   - the hero entry box is allowed, but its label, rotating placeholders and
+ *     aria-label must stay health-neutral; never copy LandingComponent.useCases
+ *     into it;
  *   - keep the emergency line, but WITHOUT the enumerated warning signs.
  *
  * Route data sets robots noindex,nofollow: this page must never compete with
@@ -38,8 +40,34 @@ import { FirebaseAnalyticsService } from '../core/firebase-analytics.service';
   selector: 'app-ad-landing',
   templateUrl: './ad-landing.component.html',
 })
-export class AdLandingComponent implements OnInit {
+export class AdLandingComponent implements OnInit, OnDestroy {
   appName = environment.appName;
+
+  /**
+   * Hero entry box. Free text is passed to /triage as `q`, the same contract the
+   * SEO homepage uses — but the visible copy is deliberately not the homepage's.
+   */
+  query = '';
+  placeholder = '';
+
+  /**
+   * Rotating placeholder examples. These are NOT LandingComponent.useCases and
+   * must never be replaced by them: every line here is about *navigating to the
+   * right doctor*, and none names a condition, symptom, medicine, lab report or
+   * body part, in any language. Anything else puts this paid landing page back
+   * into Google's health interest category (ADS_COMPLIANCE_PLAN.md 3.3).
+   */
+  useCases = [
+    'Which speciality should I book first?',
+    'Help me find the right doctor near me',
+    'Mujhe kis doctor se milna chahiye?',
+    'What should I ask at my next appointment?',
+    'मुझे किस विशेषज्ञ के पास जाना चाहिए?',
+    'Find doctors close by, open today',
+  ];
+
+  private phIndex = 0;
+  private phTimer: any = null;
 
   /**
    * Neutral, deduplicated emergency wording from CountryService. On this page it
@@ -104,14 +132,48 @@ export class AdLandingComponent implements OnInit {
     // once detection lands, instead of staying generic forever.
     this.country.init();
 
+    if (this.isBrowser) {
+      // Self-rescheduling macrotask loop — it would keep the app from ever
+      // becoming stable during prerender, so it is browser-only.
+      this.typePlaceholder();
+    } else {
+      this.placeholder = this.useCases[0];
+    }
+
     // No JSON-LD here on purpose. The page is noindex, and the schema types that
     // would fit (MedicalWebPage / FAQPage with health questions) are exactly the
     // machine-readable signal this page exists to avoid.
   }
 
+  ngOnDestroy(): void {
+    if (this.phTimer) clearTimeout(this.phTimer);
+  }
+
+  // Typewriter for the input placeholder: type a use-case, pause, erase, next.
+  private typePlaceholder(): void {
+    const full = this.useCases[this.phIndex] || '';
+    if (this.placeholder.length < full.length) {
+      this.placeholder = full.slice(0, this.placeholder.length + 1);
+      this.phTimer = setTimeout(() => this.typePlaceholder(), 55);
+      return;
+    }
+    this.phTimer = setTimeout(() => this.erasePlaceholder(), 1800);
+  }
+
+  private erasePlaceholder(): void {
+    if (this.placeholder.length > 0) {
+      this.placeholder = this.placeholder.slice(0, -1);
+      this.phTimer = setTimeout(() => this.erasePlaceholder(), 30);
+      return;
+    }
+    this.phIndex = (this.phIndex + 1) % this.useCases.length;
+    this.phTimer = setTimeout(() => this.typePlaceholder(), 250);
+  }
+
   /** Which CTA earned the click — hero, mid-page, or the closing block. */
   start(source: 'hero' | 'mid' | 'foot'): void {
-    this.analytics.logAnalyticsEvent('ad_lp_cta_click', { source });
-    this.router.navigate(['/triage']);
+    const q = (this.query || '').trim();
+    this.analytics.logAnalyticsEvent('ad_lp_cta_click', { source, typed: q ? 1 : 0 });
+    this.router.navigate(['/triage'], { queryParams: q ? { q } : {} });
   }
 }
