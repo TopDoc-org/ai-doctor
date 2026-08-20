@@ -20,7 +20,7 @@ import { Component } from '@angular/core';
     >
       <h2>Popular pages</h2>
       <ul>
-        <li><a routerLink="/">DoctoGuide home</a> — the free AI health guide and symptom checker.</li>
+        <li><a routerLink="/">DoctoGuide home</a> — the free AI health assistant and symptom checker.</li>
         <li><a routerLink="/symptom-checker">AI symptom checker</a> — describe symptoms in plain language.</li>
         <li><a routerLink="/which-specialist-to-see">Which specialist to see</a> — match symptoms to a speciality.</li>
         <li><a routerLink="/how-it-works">How DoctoGuide works</a> — the five steps, start to finish.</li>

@@ -38,7 +38,7 @@ import { SeoService, SITE_URL } from '../core/seo.service';
       <p>
         Searching symptoms online means wading through generic articles written for everyone and
         no one — and often ending up more anxious than informed. An
-        <a routerLink="/ai-doctor">AI doctor</a> responds to <em>your</em> description: your
+        <a routerLink="/ai-doctor">AI health assistant</a> responds to <em>your</em> description: your
         symptoms, your timeline, your context. One structured answer instead of twenty open tabs,
         plus a shareable summary for your next real consultation.
       </p>

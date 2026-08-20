@@ -38,7 +38,7 @@ import { SeoService, SITE_URL } from '../core/seo.service';
         A search engine returns articles written for the general population; DoctoGuide reads
         <em>your</em> specific description and responds to it directly. It doesn't stop at
         information — it tells you what to do next: monitor, book a specialist, or treat it as an
-        emergency. See the full <a routerLink="/ai-doctor">AI doctor</a> and
+        emergency. See the full <a routerLink="/ai-doctor">AI health assistant</a> and
         <a routerLink="/symptom-checker">symptom checker</a> pages for more on each part.
       </p>
 

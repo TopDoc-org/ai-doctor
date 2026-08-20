@@ -89,7 +89,11 @@ function main() {
   }
 
   const allRoutes = ['/', ...collectRoutes(OUT_DIR)];
-  const publicRoutes = allRoutes.filter((r) => r !== '/404');
+  // Prerendered but deliberately not part of the organic surface: /404, and
+  // /start (the Google Ads landing page — noindex and kept out of the sitemap
+  // on purpose, see ADS_COMPLIANCE_PLAN.md). Both are asserted separately below.
+  const NON_ORGANIC = new Set(['/404', '/start']);
+  const publicRoutes = allRoutes.filter((r) => !NON_ORGANIC.has(r));
 
   // --- robots.txt ------------------------------------------------------------
   const robotsPath = path.join(OUT_DIR, 'robots.txt');
@@ -127,7 +131,7 @@ function main() {
     );
     check(new Set(locs).size === locs.length, 'sitemap.xml contains duplicate URLs.');
 
-    for (const priv of ['/triage', '/partner', '/admin', '/owner', '/404']) {
+    for (const priv of ['/triage', '/partner', '/admin', '/owner', '/404', '/start']) {
       check(
         !locs.some((l) => l === `${SITE_URL}${priv}` || l.startsWith(`${SITE_URL}${priv}/`)),
         `sitemap.xml lists ${priv}, which must not be indexed.`,
@@ -162,6 +166,17 @@ function main() {
     const html = fs.readFileSync(notFoundPath, 'utf8');
     const robots = first(html, RE.robots) || '';
     check(/noindex/i.test(robots), '404.html is not marked noindex.');
+  }
+
+  // --- /start (Google Ads landing page) --------------------------------------
+  // It must exist, and it must be noindex. If either flips, paid traffic either
+  // 404s or the page starts competing with the homepage in organic search.
+  const startPath = path.join(OUT_DIR, 'start', 'index.html');
+  check(fs.existsSync(startPath), '/start is missing — the Google Ads final URL would 404.');
+  if (fs.existsSync(startPath)) {
+    const html = fs.readFileSync(startPath, 'utf8');
+    const robots = first(html, RE.robots) || '';
+    check(/noindex/i.test(robots), '/start is not marked noindex.');
   }
 
   // --- per-page --------------------------------------------------------------

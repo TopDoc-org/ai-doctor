@@ -41,7 +41,7 @@ export class TriageShellComponent implements OnInit, OnDestroy {
   // Greeting doubles as the multilingual hint: the AI mirrors the user's
   // language (backend behaviour), so show it rather than just claim it.
   private readonly WELCOME =
-    "Hi! I'm your AI health guide. Tell me what's bothering you — in any language you like";
+    "Hi! I'm your AI health assistant — an informational guide, not a doctor. Tell me what's bothering you, in any language you like";
 
   // Composer placeholder cycles through languages to demonstrate that the
   // user can reply in whichever one they're comfortable with.
@@ -57,6 +57,23 @@ export class TriageShellComponent implements OnInit, OnDestroy {
   // start with the environment fallback so the UI renders immediately).
   emergencyNumbers = environment.emergencyNumbers;
   countryName: string | null = null;
+
+  // Emergency copy is built by CountryService so it can never render the old
+  // "call 911 or 911" (84 of the 204 countries share one number for both), and
+  // so an undetected country gets neutral "your local emergency services
+  // (112 / 911)" wording instead of a hard-coded 112.
+  get emergencySentence(): string {
+    return this.country.emergencySentence;
+  }
+  get emergencyNumbersText(): string {
+    return this.country.emergencyNumbersText;
+  }
+
+  /** Distinct numbers worth a tel: button — collapses 911/911 down to one. */
+  get emergencyDialNumbers(): string[] {
+    const { all, ambulance } = this.emergencyNumbers;
+    return ambulance && ambulance !== all ? [all, ambulance] : [all];
+  }
   appName = environment.appName;
   instagramUrl = environment.instagram.url;
   instagramHandle = environment.instagram.handle;

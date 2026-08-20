@@ -2,6 +2,7 @@
   "name": "aidoctor-front",
   "version": "0.0.0",
   "scripts": {
+    "postinstall": "node scripts/patch-watchpack.js",
     "ng": "ng",
     "start": "ng serve --port 4700",
     "build": "ng run AIDoctorFront:prerender && node scripts/postbuild-seo.js",
@@ -15,6 +16,9 @@
     "prerender": "ng run AIDoctorFront:prerender"
   },
   "private": true,
+  "engines": {
+    "node": "^14.20.0 || ^16.14.0 || ^18.10.0"
+  },
   "dependencies": {
     "@angular/animations": "^14.2.0",
     "@angular/cdk": "^14.2.7",

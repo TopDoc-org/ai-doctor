@@ -1,7 +1,7 @@
 {
   "name": "DoctoGuide by KnocDoc",
   "short_name": "DoctoGuide",
-  "description": "Free AI doctor & symptom checker for India. Instant AI health guidance, the right specialist to see, and doctors near you.",
+  "description": "Free AI health assistant & symptom checker. Informational health guidance, the right specialist to see, and doctors near you. Not medical advice.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

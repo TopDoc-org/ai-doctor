@@ -96,6 +96,56 @@ export class CountryService {
     });
   }
 
+  /**
+   * Country names that read as "in **the** X" rather than "in X" — the United
+   * States, the Netherlands, the Philippines, the Czech Republic, and so on.
+   * Matches 19 of the 204 names in countries.json.
+   */
+  private static readonly NEEDS_ARTICLE =
+    /\b(States|Kingdom|Republic|Emirates|Islands|Netherlands|Philippines|Bahamas|Gambia|Maldives|Comoros|Seychelles|Federation|Congo)\b/;
+
+  /** " in India" / " in the United States" / "" when the country is unknown. */
+  get inCountry(): string {
+    const name = this.countryName;
+    if (!name) return '';
+    return CountryService.NEEDS_ARTICLE.test(name) ? ` in the ${name}` : ` in ${name}`;
+  }
+
+  /**
+   * Emergency numbers as user-facing text, deduplicated and safe when the
+   * country is unknown. Two problems this exists to solve:
+   *
+   *  - 84 of the 204 entries in countries.json use the SAME number for `all`
+   *    and `ambulance` (US 911, UK 999, …). The old
+   *    "call {{all}} or {{ambulance}}" markup rendered "call 911 or 911".
+   *  - Before IP detection resolves — which includes every prerendered page,
+   *    where detection never runs at all — the country is unknown but
+   *    `emergencyNumbers` already holds the '112' environment fallback, so a
+   *    visitor was told to dial a number that may not work where they are.
+   */
+  get emergencyNumbersText(): string {
+    if (!this.countryName) return 'your local emergency services (112 / 911)';
+    const { all, ambulance } = this.emergencyNumbers;
+    if (!ambulance || ambulance === all) return all;
+    return `${all} or ${ambulance} (ambulance)`;
+  }
+
+  /**
+   * Complete, always-grammatical emergency sentence. Prefer this over stitching
+   * `emergencyNumbers` into markup by hand — that is what produced "call 911 or
+   * 911" in the first place.
+   *
+   *   unknown country → "In a medical emergency, call your local emergency
+   *                      services (112 / 911) immediately."
+   *   India           → "In a medical emergency in India, call 112 or 108
+   *                      (ambulance) immediately."
+   *   United States   → "In a medical emergency in the United States, call 911
+   *                      immediately."
+   */
+  get emergencySentence(): string {
+    return `In a medical emergency${this.inCountry}, call ${this.emergencyNumbersText} immediately.`;
+  }
+
   private apply(c: CachedCountry): void {
     this.countryCode = c.countryCode;
     this.countryName = c.countryName;

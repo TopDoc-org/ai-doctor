@@ -39,16 +39,11 @@ import { LEGAL_CONFIG } from './legal-config';
       </p>
 
       <h2>Emergencies</h2>
-      <p *ngIf="countryName">
+      <p>
         <strong>{{ appName }} is not for emergencies.</strong> If you think you may
-        have a medical emergency{{ inCountry }}, call <strong>{{ emergencyNumbers.all }}</strong>
-        (all emergencies) or <strong>{{ emergencyNumbers.ambulance }}</strong> (ambulance)
-        immediately, or go to the nearest emergency department.
-      </p>
-      <p *ngIf="!countryName">
-        <strong>{{ appName }} is not for emergencies.</strong> If you think you may
-        have a medical emergency, call your local emergency number immediately, or go
-        to the nearest emergency department.
+        have a medical emergency{{ inCountry }}, call
+        <strong>{{ emergencyNumbersText }}</strong> immediately, or go to the nearest
+        emergency department.
       </p>
 
       <h2>Doctor listings</h2>
@@ -77,19 +72,22 @@ import { LEGAL_CONFIG } from './legal-config';
 export class DisclaimerComponent implements OnInit {
   appName = environment.appName;
   legal = LEGAL_CONFIG;
-  emergencyNumbers = environment.emergencyNumbers;
   countryName: string | null = null;
 
   constructor(private country: CountryService) {}
 
+  // Delegated so the definite-article handling ("in the United States") and the
+  // deduplicated / country-neutral emergency wording live in exactly one place.
   get inCountry(): string {
-    return this.countryName ? ` in ${this.countryName}` : '';
+    return this.country.inCountry;
+  }
+  get emergencyNumbersText(): string {
+    return this.country.emergencyNumbersText;
   }
 
   ngOnInit(): void {
     this.country.init().then(() => {
       this.countryName = this.country.countryName;
-      this.emergencyNumbers = this.country.emergencyNumbers;
     });
   }
 }

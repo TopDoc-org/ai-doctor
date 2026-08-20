@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { LandingComponent } from './landing/landing.component';
+import { AdLandingComponent } from './landing/ad-landing.component';
 import { PrivacyComponent } from './legal/privacy.component';
 import { TermsComponent } from './legal/terms.component';
 import { DisclaimerComponent } from './legal/disclaimer.component';
@@ -44,9 +45,25 @@ const routes: Routes = [
         // Brand first: the primary objective is ranking for the term "DoctoGuide".
         // No %COUNTRY% token here — the title is already at the 60-character limit,
         // and a token that expands at runtime would push it past truncation.
-        title: 'DoctoGuide — AI Health Guide & Free Symptom Checker | KnocDoc',
+        title: 'DoctoGuide — AI Health Assistant & Symptom Checker | KnocDoc',
         description:
-          'DoctoGuide is a free AI health guide and symptom checker by KnocDoc. Describe your symptoms, understand possible explanations and urgency, and learn which specialist to see in %COUNTRY%. No sign-up.',
+          'DoctoGuide is a free AI health assistant and symptom checker by KnocDoc. Describe your symptoms, understand possible explanations and urgency, and learn which specialist to see in %COUNTRY%. Informational guidance only — not medical advice.',
+      },
+    },
+  },
+  {
+    // Paid-traffic landing page (Google Ads final URL). Kept OUT of the search
+    // index so it never competes with `/` for the same queries, and out of
+    // sitemap.xml (scripts/postbuild-seo.js). See ADS_COMPLIANCE_PLAN.md for why
+    // its copy deliberately carries no personal-health vocabulary.
+    path: 'start',
+    component: AdLandingComponent,
+    data: {
+      seo: {
+        title: 'DoctoGuide — Know Which Doctor to See | KnocDoc',
+        description:
+          'Free guided assistant from KnocDoc. Answer a few questions in plain language, get pointed to the right speciality, and find doctors near you. No sign-up, no card.',
+        robots: 'noindex,nofollow',
       },
     },
   },
@@ -88,9 +105,9 @@ const routes: Routes = [
     component: AiDoctorPageComponent,
     data: {
       seo: {
-        title: 'Free AI Doctor Online — Ask Any Health Question | DoctoGuide',
+        title: 'Free AI Health Assistant Online | DoctoGuide by KnocDoc',
         description:
-          'Talk to a free AI doctor online. Describe your symptoms, get instant health guidance, and learn which specialist to see. No sign-up, no card. DoctoGuide by KnocDoc.',
+          'Ask a free AI health assistant online. Describe your symptoms, get instant informational guidance, and learn which specialist to see. Not a licensed physician and not medical advice. DoctoGuide by KnocDoc.',
       },
     },
   },
@@ -167,7 +184,7 @@ const routes: Routes = [
       seo: {
         title: 'DoctoGuide Pricing — Free, Always | DoctoGuide',
         description:
-          'DoctoGuide is completely free: unlimited AI symptom checker, AI doctor, specialist matching, and doctor search. No subscription, no card, no hidden tier.',
+          'DoctoGuide is completely free: unlimited AI symptom checker, AI health assistant, specialist matching, and doctor search. No subscription, no card, no hidden tier.',
       },
     },
   },
@@ -176,9 +193,9 @@ const routes: Routes = [
     component: AboutPageComponent,
     data: {
       seo: {
-        title: 'About DoctoGuide — AI Health Guide by KnocDoc',
+        title: 'About DoctoGuide — AI Health Assistant by KnocDoc',
         description:
-          'DoctoGuide is a free AI health guide and symptom checker built and operated by KnocDoc. What it does, why it exists, and what it deliberately will not do.',
+          'DoctoGuide is a free AI health assistant and symptom checker built and operated by KnocDoc. What it does, why it exists, and what it deliberately will not do.',
       },
     },
   },
@@ -254,7 +271,7 @@ const routes: Routes = [
     data: {
       seo: {
         title: 'Page Not Found | DoctoGuide',
-        description: 'This page does not exist. Browse DoctoGuide, the free AI health guide and symptom checker by KnocDoc.',
+        description: 'This page does not exist. Browse DoctoGuide, the free AI health assistant and symptom checker by KnocDoc.',
         robots: 'noindex,follow',
       },
     },
@@ -265,7 +282,7 @@ const routes: Routes = [
     data: {
       seo: {
         title: 'Page Not Found | DoctoGuide',
-        description: 'This page does not exist. Browse DoctoGuide, the free AI health guide and symptom checker by KnocDoc.',
+        description: 'This page does not exist. Browse DoctoGuide, the free AI health assistant and symptom checker by KnocDoc.',
         robots: 'noindex,follow',
       },
     },

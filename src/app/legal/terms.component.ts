@@ -37,13 +37,9 @@ import { LEGAL_CONFIG } from './legal-config';
       </p>
 
       <h2>4. Not for emergencies</h2>
-      <p *ngIf="countryName">
-        Do not use the Service for medical emergencies. Call {{ emergencyNumbers.all }} or
-        {{ emergencyNumbers.ambulance }} immediately in an emergency.
-      </p>
-      <p *ngIf="!countryName">
-        Do not use the Service for medical emergencies. Call your local emergency
-        number immediately in an emergency.
+      <p>
+        Do not use the Service for medical emergencies. Call
+        {{ emergencyNumbersText }} immediately in an emergency.
       </p>
 
       <h2>5. Doctor listings are third-party data</h2>
@@ -102,19 +98,22 @@ import { LEGAL_CONFIG } from './legal-config';
 export class TermsComponent implements OnInit {
   appName = environment.appName;
   legal = LEGAL_CONFIG;
-  emergencyNumbers = environment.emergencyNumbers;
   countryName: string | null = null;
 
   constructor(private country: CountryService) {}
 
+  // Delegated so the definite-article handling ("in the United States") and the
+  // deduplicated / country-neutral emergency wording live in exactly one place.
   get inCountry(): string {
-    return this.countryName ? ` in ${this.countryName}` : '';
+    return this.country.inCountry;
+  }
+  get emergencyNumbersText(): string {
+    return this.country.emergencyNumbersText;
   }
 
   ngOnInit(): void {
     this.country.init().then(() => {
       this.countryName = this.country.countryName;
-      this.emergencyNumbers = this.country.emergencyNumbers;
     });
   }
 }

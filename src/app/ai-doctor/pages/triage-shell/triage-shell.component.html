@@ -42,8 +42,7 @@
   <div class="flex h-[100dvh] flex-col bg-cream">
   <!-- emergency banner -->
   <div class="bg-red-600 px-4 py-2 text-center text-xs font-medium text-white">
-    <span *ngIf="countryName">If this is an emergency in {{ countryName }}, call {{ emergencyNumbers.all }} or {{ emergencyNumbers.ambulance }} (ambulance) immediately.</span>
-    <span *ngIf="!countryName">If this is an emergency, call your local emergency number immediately.</span>
+    <span>{{ emergencySentence }}</span>
   </div>
 
   <!-- header -->
@@ -244,15 +243,19 @@
       <div *ngIf="emergency" class="rounded-2xl border-2 border-red-500 bg-red-50 p-5 text-center">
         <span class="material-icons text-red-600" style="font-size:32px">emergency</span>
         <p class="mt-2 font-heading text-lg font-bold text-red-700">Seek urgent care now</p>
-        <p *ngIf="countryName" class="mt-1 text-sm text-red-700/80">
-          Call {{ emergencyNumbers.all }} (all emergencies) or {{ emergencyNumbers.ambulance }} (ambulance), or go to the nearest emergency room.
+        <p class="mt-1 text-sm text-red-700/80">
+          Call {{ emergencyNumbersText }} now, or go to the nearest emergency room.
         </p>
-        <p *ngIf="!countryName" class="mt-1 text-sm text-red-700/80">
-          Call your local emergency number now, or go to the nearest emergency room.
-        </p>
+        <!-- One button per DISTINCT number: countries where the all-emergencies
+             and ambulance lines are the same used to get two identical buttons. -->
         <div *ngIf="countryName" class="mt-3 flex justify-center gap-2">
-          <a [href]="'tel:' + emergencyNumbers.all" class="rounded-full bg-red-600 px-5 py-2 text-sm font-semibold text-white">Call {{ emergencyNumbers.all }}</a>
-          <a [href]="'tel:' + emergencyNumbers.ambulance" class="rounded-full border border-red-600 px-5 py-2 text-sm font-semibold text-red-700">Call {{ emergencyNumbers.ambulance }}</a>
+          <a
+            *ngFor="let n of emergencyDialNumbers; let first = first"
+            [href]="'tel:' + n"
+            [class]="first
+              ? 'rounded-full bg-red-600 px-5 py-2 text-sm font-semibold text-white'
+              : 'rounded-full border border-red-600 px-5 py-2 text-sm font-semibold text-red-700'"
+          >Call {{ n }}</a>
         </div>
         <button (click)="continueWithReport()" class="mt-3 text-sm font-medium text-red-700/70 underline underline-offset-2 hover:text-red-800">
           Not an emergency? Continue with my report

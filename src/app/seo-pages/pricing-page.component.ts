@@ -6,14 +6,14 @@ import { SeoService, SITE_URL } from '../core/seo.service';
   template: `
     <app-seo-page-layout
       heading="DoctoGuide pricing: free, always"
-      lede="No subscription, no per-consultation fee, no locked features behind a paywall. Every part of DoctoGuide — symptom checker, AI doctor, specialist matching, doctor search — is free to use."
+      lede="No subscription, no per-consultation fee, no locked features behind a paywall. Every part of DoctoGuide — symptom checker, AI health assistant, specialist matching, doctor search — is free to use."
       ctaTitle="Try DoctoGuide — free, no card needed"
       ctaLabel="Get started for free"
     >
       <h2>What's included, at no cost</h2>
       <ul>
         <li>Unlimited use of the <a routerLink="/symptom-checker">AI symptom checker</a>.</li>
-        <li>Unlimited conversations with the <a routerLink="/ai-doctor">AI doctor</a>.</li>
+        <li>Unlimited conversations with the <a routerLink="/ai-doctor">AI health assistant</a>.</li>
         <li>Specialist matching — see <a routerLink="/which-specialist-to-see">which specialist to see</a>.</li>
         <li><a routerLink="/find-doctors">Finding doctors near you</a>, matched to your symptoms.</li>
         <li>The full <a routerLink="/health-guide">online health guide</a> — symptoms, reports, and medicines explained.</li>
@@ -31,7 +31,7 @@ import { SeoService, SITE_URL } from '../core/seo.service';
       <h2>Is there a paid or premium version?</h2>
       <p>
         No. There is currently no paid tier, subscription, or premium plan for DoctoGuide. If that
-        ever changes, the free symptom checker, AI doctor conversations, and specialist guidance
+        ever changes, the free symptom checker, AI health assistant conversations, and specialist guidance
         described on this page will remain free.
       </p>
 
@@ -54,7 +54,7 @@ import { SeoService, SITE_URL } from '../core/seo.service';
       </details>
       <details>
         <summary>Will DoctoGuide always be free?</summary>
-        <p>The core symptom checker, AI doctor, and specialist guidance on this page are free today and intended to stay that way.</p>
+        <p>The core symptom checker, AI health assistant, and specialist guidance on this page are free today and intended to stay that way.</p>
       </details>
     </app-seo-page-layout>
   `,
@@ -95,7 +95,7 @@ export class PricingPageComponent implements OnInit, OnDestroy {
           name: 'Will DoctoGuide always be free?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'The core symptom checker, AI doctor, and specialist guidance are free today and intended to stay that way.',
+            text: 'The core symptom checker, AI health assistant, and specialist guidance are free today and intended to stay that way.',
           },
         },
       ],
