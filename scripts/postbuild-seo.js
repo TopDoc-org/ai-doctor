@@ -165,8 +165,37 @@ function main() {
       fs.writeFileSync(startPage, after, 'utf8');
       console.log('[postbuild-seo] stripped site-wide JSON-LD from /start (ad landing page).');
     }
-    if (/symptom|diagnose|MedicalAudience|HealthApplication/i.test(after.replace(/does not provide medical advice, diagnosis[^<]*/gi, ''))) {
-      console.error('[postbuild-seo] FAIL: /start still contains personal-health vocabulary. See ADS_COMPLIANCE_PLAN.md 3.3.');
+    // og:image / twitter:image point at assets/og-image.png, whose artwork reads
+    // "Free AI Doctor & Symptom Checker — Instant health guidance, find the right
+    // specialist". Image text is OCR-readable, so on this page the card image is a
+    // health signal in picture form. manifest.webmanifest is dropped for the same
+    // reason: its description names a symptom checker. Both stay intact for every
+    // other route; /start simply stops referencing them.
+    let scrubbed = after
+      // HTML comments ship to the crawler like any other bytes. index.html's
+      // comments explain the JSON-LD graph and say "provides medical care" /
+      // "MedicalOrganization" — health vocabulary reaching /start through
+      // commentary nobody reads. Strip them here (only on this page; they are
+      // useful documentation everywhere else).
+      .replace(/<!--[\s\S]*?-->\s*/g, '')
+      .replace(/<meta property="og:image(:width|:height)?" content="[^"]*">\s*/g, '')
+      .replace(/<meta name="twitter:image" content="[^"]*">\s*/g, '')
+      .replace(/<meta name="twitter:card" content="[^"]*">\s*/g, '')
+      .replace(/<link rel="manifest" href="[^"]*">\s*/g, '');
+    if (scrubbed !== after) {
+      fs.writeFileSync(startPage, scrubbed, 'utf8');
+      console.log('[postbuild-seo] stripped og:image, twitter:image and manifest link from /start.');
+    }
+
+    // Fail the build rather than ship a regression: any of this vocabulary in the
+    // rendered HTML puts the page back in Google's health interest category, and
+    // it is easy to reintroduce from a shared component or a copied meta string.
+    const BANNED = /\b(health|healthcare|medical|medicine|doctor|doctors|physician|clinic|clinical|patient|symptom|symptoms|diagnos\w*|treatment|prescription|speciality|specialist|specialities|practitioner|consultation|telemedicine|emergency|hospital)\b/i;
+    const hit = scrubbed.match(BANNED);
+    if (hit) {
+      const at = scrubbed.indexOf(hit[0]);
+      console.error(`[postbuild-seo] FAIL: /start contains "${hit[0]}" — ...${scrubbed.slice(Math.max(0, at - 90), at + 90).replace(/\s+/g, ' ')}...`);
+      console.error('[postbuild-seo] The ad landing page must carry no health vocabulary, in either direction. See ADS_COMPLIANCE_PLAN.md 3.3.');
       process.exit(1);
     }
   } else {

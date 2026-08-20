@@ -361,6 +361,20 @@
         </svg>
         <span>{{ instagramHandle }}</span>
       </a>
+      <!-- Contact. Icon only: the number is never rendered into the HTML, so a
+           scraper cannot lift it off the page. openWhatsApp() assembles and opens
+           the link at click time — an <a href> would put the number back in the markup. -->
+      <button
+        type="button"
+        (click)="openWhatsApp()"
+        class="mb-3 ml-3 inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[#25D366] align-middle text-white shadow-md transition-colors hover:bg-[#1DA851] focus:outline-none focus:ring-2 focus:ring-[#25D366]/40"
+        aria-label="Chat with us on WhatsApp"
+        title="Chat with us on WhatsApp"
+      >
+        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="currentColor" aria-hidden="true">
+          <path d="M12.04 2C6.6 2 2.2 6.4 2.2 11.84c0 1.74.46 3.44 1.32 4.94L2 22l5.36-1.4a9.78 9.78 0 0 0 4.68 1.2h.01c5.43 0 9.84-4.4 9.84-9.84C21.89 6.4 17.47 2 12.04 2Zm5.76 13.9c-.24.68-1.4 1.32-1.94 1.36-.5.05-1.12.07-1.8-.11a15.6 15.6 0 0 1-1.63-.6c-2.87-1.24-4.74-4.13-4.88-4.32-.14-.19-1.17-1.55-1.17-2.96 0-1.41.74-2.1 1-2.39.26-.29.57-.36.76-.36l.55.01c.17.01.41-.07.64.49.24.57.82 1.98.89 2.12.07.14.12.31.02.5-.09.19-.14.31-.28.47l-.42.49c-.14.14-.28.29-.12.57.16.28.71 1.17 1.53 1.9 1.05.94 1.94 1.23 2.22 1.37.28.14.44.12.6-.07.17-.19.69-.8.87-1.08.19-.28.37-.23.62-.14.26.09 1.65.78 1.93.92.28.14.47.21.54.33.07.12.07.68-.17 1.36Z"/>
+        </svg>
+      </button>
       <!-- Internal links to the SEO landing pages. The homepage is the highest-authority
            page on the site; without these the eight pages are only reachable via sitemap.xml. -->
       <nav aria-label="More from DoctoGuide" class="mb-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5">
