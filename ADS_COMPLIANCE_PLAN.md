@@ -26,6 +26,15 @@ allowed once a page is classified as health (see §3.4), which would limit it re
 
 ## 1. What the policy actually does (read this before changing anything)
 
+> **Confirmed 21 Aug** against the policy text in the Ads UI ("Health in personalised
+> advertising"). The diagnosis below is correct: it is a **targeting** policy, and Google's
+> own three remedies are (1) remove advertiser-curated audiences, (2) edit the content,
+> (3) appeal. Option 1 is the one that can actually clear the status — see §3.4.
+> One clarification from the official text: custom segments are listed as *supported*, but
+> footnote 4 says a custom segment with a sensitive landing page **serves only on Display,
+> to non-sensitive audiences or contextually, and does not serve at all on any other
+> campaign type**. So on Search or Performance Max the practical answer is still: remove them.
+
 The policy you pasted is **"Restricted targeting in personalised advertising"**. It is *not*
 a disapproval policy. Once Google classifies your creative or landing page as the health
 sensitive interest category, the ad **keeps running** — but these targeting types stop
@@ -203,7 +212,7 @@ symptom conversation.
 
 | Item | Why it matters | Owner |
 |---|---|---|
-| `assets/og-image.png` still reads "AI Health Guide & Symptom Checker" | It is the `og:image` on `/start` too. Ship a neutral variant (`og-start.png`) and set `seo.image` on the `/start` route. | design |
+| ~~`assets/og-image.png` still reads "AI Health Guide & Symptom Checker"~~ **DONE, 21 Aug** — and it was worse than recorded here: the card actually read **"Free AI Doctor & Symptom Checker"**, the one phrase §3A removed everywhere else, shipping as `og:image`/`twitter:image` on *every* page via `SeoService` DEFAULTS. Both cards regenerated: `og-image.png` now reads "Free AI Health Assistant & Symptom Checker / Health information, not medical advice", and a new `og-start.png` ("Know Who to Book / Find the right kind of doctor near you") carries no health, symptom or condition wording. `seo.image` set on the `/start` route — needed even though `postbuild-seo.js` strips `og:image` from the prerendered `/start`, because `SeoService.update()` re-adds the tag on hydration, and before this it re-added the health-worded default. | done |
 | Switch the campaign's **Final URL** to `https://doctoguide.knocdoc.in/start` | Nothing above takes effect until this happens. | you, in the Ads UI |
 | Consider a second variant `/start-b` for a doctor-directory-first angle | Lets you A/B without touching the SEO homepage. | later |
 | The `/triage` destination still asks for symptoms | Unavoidable — it is the product. Kept behind the CTA, `noindex`, and `Disallow: /triage` in robots.txt. | accepted risk |
