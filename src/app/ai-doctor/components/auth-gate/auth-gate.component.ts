@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { AiDoctorApiService } from '../../services/ai-doctor-api.service';
 import { AiDoctorStateService } from '../../services/ai-doctor-state.service';
 import { GeolocationService } from '../../services/geolocation.service';
+import { FirebaseAnalyticsService } from '../../../core/firebase-analytics.service';
 
 export interface AuthSuccess {
   name: string;
@@ -182,7 +183,14 @@ export class AuthGateComponent implements OnInit {
     this.authError = '';
     this.busy = true;
     this.api.login(this.mobile.trim(), this.pinValue).subscribe({
-      next: (res) => this.completeExistingLogin(res),
+      next: (res) => {
+        // Returning user — not a conversion, kept separate from sign_up so the
+        // key-event count stays a count of new accounts only.
+        this.analytics.logAnalyticsEvent('login', {
+          method: this.isKnocDocAccount ? 'knocdoc_account' : 'pin',
+        });
+        this.completeExistingLogin(res);
+      },
       error: (err) => {
         this.busy = false;
         const code = err?.status;
@@ -263,7 +271,11 @@ export class AuthGateComponent implements OnInit {
         signupSource: SIGNUP_SOURCE,
       };
       this.api.setPin(payload).subscribe({
-        next: () => this.submitLoginAfterRegister(),
+        next: () => {
+          // Conversion: an existing unregistered record became a real account.
+          this.analytics.logAnalyticsEvent('sign_up', { method: 'pin_upgrade' });
+          this.submitLoginAfterRegister();
+        },
         error: (err) => {
           this.busy = false;
           if (err?.status === 409) {
@@ -290,7 +302,12 @@ export class AuthGateComponent implements OnInit {
         signupSource: SIGNUP_SOURCE,
       };
       this.api.signup(payload).subscribe({
-        next: () => this.submitLoginAfterRegister(),
+        next: () => {
+          // Conversion: brand-new account. Logged on this branch rather than in
+          // finishLogin(), which returning logins and PIN resets also pass through.
+          this.analytics.logAnalyticsEvent('sign_up', { method: 'pin' });
+          this.submitLoginAfterRegister();
+        },
         error: (err) => {
           this.busy = false;
           if (err?.status === 409) {
@@ -362,7 +379,8 @@ export class AuthGateComponent implements OnInit {
   constructor(
     private api: AiDoctorApiService,
     private state: AiDoctorStateService,
-    private geo: GeolocationService
+    private geo: GeolocationService,
+    private analytics: FirebaseAnalyticsService
   ) {}
 
   // Auto-prefill district from GPS on open (silent — no error noise if denied).

@@ -249,29 +249,31 @@ const routes: Routes = [
     path: 'triage',
     loadChildren: () =>
       import('./ai-doctor/ai-doctor.module').then((m) => m.AiDoctorModule),
-    // Auth-gated app — keep out of the search index.
-    data: { seo: { robots: 'noindex,nofollow' } },
+    // Auth-gated app — keep out of the search index. The title is never read by
+    // a crawler; it exists so analytics reports that group by page title do not
+    // fold this route into the default title shared by every untitled route.
+    data: { seo: { title: 'Symptom Check — DoctoGuide', robots: 'noindex,nofollow' } },
   },
   {
     path: 'partner',
     loadChildren: () =>
       import('./partner/partner.module').then((m) => m.PartnerModule),
     // Clinic-admin dashboard — keep out of the search index.
-    data: { seo: { robots: 'noindex,nofollow' } },
+    data: { seo: { title: 'Clinic Console — DoctoGuide', robots: 'noindex,nofollow' } },
   },
   {
     path: 'admin',
     loadChildren: () =>
       import('./admin/admin.module').then((m) => m.AdminModule),
     // Global super-admin console — keep out of the search index.
-    data: { seo: { robots: 'noindex,nofollow' } },
+    data: { seo: { title: 'Admin Console — DoctoGuide', robots: 'noindex,nofollow' } },
   },
   {
     path: 'owner',
     loadChildren: () =>
       import('./owner/owner.module').then((m) => m.OwnerModule),
     // Creator (platform-owner) console — keep out of the search index.
-    data: { seo: { robots: 'noindex,nofollow' } },
+    data: { seo: { title: 'Owner Console — DoctoGuide', robots: 'noindex,nofollow' } },
   },
   // Real 404 instead of the previous `redirectTo: ''`. Redirecting every unknown
   // URL to the homepage returned HTTP 200 with duplicate homepage content for an

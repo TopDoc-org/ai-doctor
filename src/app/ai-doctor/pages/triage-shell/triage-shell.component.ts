@@ -302,9 +302,16 @@ export class TriageShellComponent implements OnInit, OnDestroy {
     this.api.createSession().subscribe({
       next: (res) => {
         this.state.sessionId = res.sessionId;
+        // A session is created lazily on the first message that clears consent,
+        // and this method short-circuits once sessionId exists — so this is the
+        // one-shot "first symptom actually reached the backend" moment.
+        this.analytics.logAnalyticsEvent('first_message_sent', {});
         done();
       },
-      error: () => done(),
+      error: () => {
+        this.analytics.logAnalyticsEvent('session_create_failed', {});
+        done();
+      },
     });
   }
 
@@ -397,6 +404,11 @@ export class TriageShellComponent implements OnInit, OnDestroy {
     if (this.age != null) parts.push(`I am ${this.age} years old`);
     if (this.sex) parts.push(`biological sex ${this.sex}`);
     this.ageSexDone = true;
+    // Top of the funnel: the user has committed real input. Fires before the
+    // consent gate, so consent_shown / consent_accepted can be measured against it.
+    this.analytics.logAnalyticsEvent('triage_started', {
+      for: this.consultFor === 'other' ? 'other' : 'self',
+    });
     this.send(parts.join(', '));
   }
 
@@ -507,6 +519,7 @@ export class TriageShellComponent implements OnInit, OnDestroy {
     if (!this.state.consented) {
       this.pendingText = text;
       this.showConsent = true;
+      this.analytics.logAnalyticsEvent('consent_shown', {});
       return;
     }
     this.dispatch(text);
@@ -572,6 +585,9 @@ export class TriageShellComponent implements OnInit, OnDestroy {
     if (!this.consentChecked) return;
     this.state.consented = true;
     this.showConsent = false;
+    // Consent is re-asked on every new chat (state.reset clears it), so this
+    // counts consults started, not distinct users.
+    this.analytics.logAnalyticsEvent('consent_accepted', {});
     const t = this.pendingText;
     this.pendingText = '';
     if (t) this.dispatch(t);
@@ -634,6 +650,11 @@ export class TriageShellComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.loading = false;
+        // This handler covers every turn, so scope the event to the turn that
+        // was supposed to return the report.
+        if (this.reportPending) {
+          this.analytics.logAnalyticsEvent('report_failed', { reason: 'request_error' });
+        }
         this.state.addMessage({
           role: 'assistant',
           text: 'Sorry, something went wrong. Please try again.',
@@ -645,6 +666,12 @@ export class TriageShellComponent implements OnInit, OnDestroy {
   private handleResponse(res: MessageResponse): void {
     const say = (t?: string) =>
       t && this.state.addMessage({ role: 'assistant', text: t, intent: res.intent });
+
+    // The interview had run out of questions, so this response was expected to
+    // carry the report. Captured before the cases below mutate reportPending, so
+    // the non-report branches can tell "the report never arrived" from a normal
+    // mid-interview turn. See the report_failed events below.
+    const expectedReport = this.reportPending;
 
     // Stale chips must never outlive their question — the question case below
     // is the only thing that puts them back.
@@ -667,6 +694,21 @@ export class TriageShellComponent implements OnInit, OnDestroy {
           this.state.suggestedSpecialties = res.report.suggestedSpecialties || [];
           // A new/updated report resets the user's pick back to the primary.
           this.state.selectedSpecialty = null;
+          // The conversion. Must be read before the amend block below flips
+          // this.amending. Latched in state because `report` is re-assigned on
+          // every rehydrate (page refresh, opening a past consult) and again on
+          // each amend — without the latch one consult would count several times.
+          // Deliberately carries no clinical detail: no symptom, condition,
+          // urgency or specialty is sent to Google.
+          if (this.amending) {
+            this.analytics.logAnalyticsEvent('report_amended', {});
+          } else if (!this.state.reportTracked) {
+            this.state.reportTracked = true;
+            this.analytics.logAnalyticsEvent('report_generated', {
+              method: 'triage_chat',
+              questions_asked: this.messages.filter((m) => m.role === 'user').length,
+            });
+          }
         }
         if (this.amending) {
           this.amending = false;
@@ -679,6 +721,14 @@ export class TriageShellComponent implements OnInit, OnDestroy {
       case 'question': {
         say(res.message || res.question);
         this.answerOptions = res.options || [];
+        // The interview was finished but the backend asked another question
+        // instead of returning the report. Sometimes legitimate, so it gets its
+        // own reason code rather than being lumped in with a hard failure.
+        if (expectedReport && !this.amending) {
+          this.analytics.logAnalyticsEvent('report_failed', {
+            reason: 'question_instead_of_report',
+          });
+        }
         // During an amend round the report already exists — keep the progress
         // bar at 100 instead of replaying interview progress.
         if (!this.amending) {
@@ -705,6 +755,15 @@ export class TriageShellComponent implements OnInit, OnDestroy {
       case 'out_of_scope':
       default:
         say(res.message);
+        // A degraded model chain can answer HTTP 200 with a non-report type
+        // after the interview is over. Nothing else in the client notices that
+        // the report simply never arrived, so this is the only signal for it.
+        if (expectedReport) {
+          this.analytics.logAnalyticsEvent('report_failed', {
+            reason: 'no_report_in_response',
+            response_type: res.type,
+          });
+        }
         break;
     }
   }
@@ -748,6 +807,10 @@ export class TriageShellComponent implements OnInit, OnDestroy {
   private openAuth(action: 'pdf' | 'soap' | 'doctors' | 'home' | null): void {
     this.pendingAction = action;
     this.showAuth = true;
+    // The auth gate opened. Denominator for sign_up — it covers both signup and
+    // returning login, since the gate cannot know which the user will do, and
+    // `trigger` records what they were reaching for when it blocked them.
+    this.analytics.logAnalyticsEvent('signup_started', { trigger: action || 'direct' });
   }
 
   // ---- Leaving the chat (logo -> home) ----
