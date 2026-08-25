@@ -6,6 +6,7 @@ const LS_PREV_SESSION = 'aiDoctorPrevSessionId';
 const LS_LEAD = 'aiDoctorLeadCaptured';
 const LS_FEEDBACK = 'aiDoctorFeedbackDone';
 const LS_CONSENT = 'aiDoctorConsent';
+const LS_REPORT_TRACKED = 'aiDoctorReportTracked';
 const LS_TOKEN = 'aiDoctorToken';
 const LS_USERID = 'aiDoctorUserId';
 const LS_USERNAME = 'aiDoctorUserName';
@@ -63,6 +64,18 @@ export class AiDoctorStateService {
   }
   set feedbackSubmitted(v: boolean) {
     localStorage.setItem(LS_FEEDBACK, v ? '1' : '0');
+  }
+
+  // Whether the `report_generated` analytics event has already fired for this
+  // consult. The report object is re-assigned on every rehydrate (page refresh,
+  // opening a past consult) and again on each amend, so without this latch the
+  // conversion would be counted several times for one consult. Cleared by
+  // reset(), which is what "New chat" runs — so the next consult counts again.
+  get reportTracked(): boolean {
+    return localStorage.getItem(LS_REPORT_TRACKED) === '1';
+  }
+  set reportTracked(v: boolean) {
+    localStorage.setItem(LS_REPORT_TRACKED, v ? '1' : '0');
   }
 
   get consented(): boolean {
@@ -136,5 +149,6 @@ export class AiDoctorStateService {
     localStorage.removeItem(LS_LEAD);
     localStorage.removeItem(LS_FEEDBACK);
     localStorage.removeItem(LS_CONSENT); // re-ask consent on each new chat
+    localStorage.removeItem(LS_REPORT_TRACKED); // count the next report again
   }
 }
